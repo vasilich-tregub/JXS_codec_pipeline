@@ -5,7 +5,7 @@ software package individually specified in the projects of this solution.
 
 For the convinience of users, the following header from the files common.h, dwt.h, ids.h, and dwt.c used in this project 
 
-/***************************************************************************
+<pre>/***************************************************************************
 ** intoPIX SA & Fraunhofer IIS (hereinafter the "Software Copyright       **
 ** Holder") hold or have the right to license copyright with respect to   **
 ** the accompanying software (hereinafter the "Software").                **
@@ -57,7 +57,7 @@ For the convinience of users, the following header from the files common.h, dwt.
 **                                                                        **
 ** No patent licence is granted, nor is a patent licensing commitment     **
 ** made, by implication, estoppel or otherwise.                           **
-***************************************************************************/
+***************************************************************************/</pre>
 
 is transferred into this document and cover the content of 
 the files common.h, dwt.h, ids.h, and dwt.c used in this project. 
