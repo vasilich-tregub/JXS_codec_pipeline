@@ -1,0 +1,33 @@
+bitstream_size_in_bytes	864	unsigned __int64
+budget_report_lines	0.00000000	float
+verbose	0	int
+gains_mode	XS_GAINS_OPT_PSNR (0)	xs_gains_mode_e
+profile	XS_PROFILE_LIGHT_444_12 (6656)	xs_profile_e
+level	XS_LEVEL_1K_1 (4)	xs_level_e
+sublevel	XS_SUBLEVEL_6_BPP (8)	xs_sublevel_e
+cap_bits	0	xs_cap_e
+-p	{color_transform=XS_CPIH_RCT (1) Cw=0 slice_height=16 ...}	xs_config_parameters_t
+	color_transform	XS_CPIH_RCT (1)	xs_cpih_e
+	Cw	0	unsigned short
+	slice_height	16	unsigned short
+	N_g	4 '\x4'	unsigned char
+	S_s	8 '\b'	unsigned char
+	Bw	20 '\x14'	unsigned char
+	Fq	8 '\b'	unsigned char
+	B_r	4 '\x4'	unsigned char
+	Fslc	0 '\0'	unsigned char
+	Ppoc	0 '\0'	unsigned char
+	NLx	5 '\x5'	unsigned char
+	NLy	1 '\x1'	unsigned char
+	Lh	0 '\0'	unsigned char
+	Rl	0 '\0'	unsigned char
+	Qpih	0 '\0'	unsigned char
+	Fs	0 '\0'	unsigned char
+	Rm	1 '\x1'	unsigned char
+	Sd	0 '\0'	unsigned char
+	+lvl_gains	0x0000007d85cfecfb [4, 2, 2, 3, 2, 2, 2, 1, 1, 2, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 255, zeros, 255]	unsigned char[41]
+	+lvl_priorities	0x0000007d85cfed24 [21, 1, 0, 15, 19, 18, 5, 9, 8, 14, 17, 16, 2, 4, 3, 7, 13, 11, 6, 12, 10, 20, 23, 22, 255, zeros, 255]	unsigned char[41]
+		Tnlt	XS_NLT_NONE (0)	xs_nlt_e
++		Tnlt_params	{quadratic={sigma=0 alpha=0 } extended={T1=0 T2=0 E=0 '\0' } }	xs_nlt_parameters_t
++		tetrix_params	{Cf=XS_TETRIX_FULL (0) e1=0 '\0' e2=0 '\0' }	xs_cts_parameters_t
+		cfa_pattern	XS_CFA_RGGB (0)	xs_crg_pattern_e

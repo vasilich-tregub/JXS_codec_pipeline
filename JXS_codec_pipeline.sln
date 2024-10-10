@@ -7,8 +7,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_wavelet_transform", "JX
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{682D822B-2726-444E-9BC1-4407CC7FB19B}"
 	ProjectSection(SolutionItems) = preProject
+		config48x36.txt = config48x36.txt
+		ctx48x36.txt = ctx48x36.txt
+		ids(48x36).txt = ids(48x36).txt
+		precinct48x36.txt = precinct48x36.txt
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_precincts", "JXS_precincts\JXS_precincts.vcxproj", "{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +32,14 @@ Global
 		{8AF42B1B-60BD-4DBA-9C58-6151C5406C6D}.Release|x64.Build.0 = Release|x64
 		{8AF42B1B-60BD-4DBA-9C58-6151C5406C6D}.Release|x86.ActiveCfg = Release|Win32
 		{8AF42B1B-60BD-4DBA-9C58-6151C5406C6D}.Release|x86.Build.0 = Release|Win32
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Debug|x64.ActiveCfg = Debug|x64
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Debug|x64.Build.0 = Debug|x64
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Debug|x86.ActiveCfg = Debug|Win32
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Debug|x86.Build.0 = Debug|Win32
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x64.ActiveCfg = Release|x64
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x64.Build.0 = Release|x64
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x86.ActiveCfg = Release|Win32
+		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

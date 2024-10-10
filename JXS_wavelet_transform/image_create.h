@@ -16,7 +16,7 @@ int image_create(xs_image_t& image, ids_t& ids)
     ids.h = image.height;
     ids.sd = 0;
     ids.nlxy.x = 5; // ndecomp_h;
-    ids.nlxy.y = 1; // ndecomp_v;
+    ids.nlxy.y = 2; // ndecomp_v;
 
     for (int k = 0; k < image.ncomps; ++k)
     {
