@@ -162,6 +162,62 @@ int main()
     //*codestream_byte_size = ((bitpacker_get_len(ctx->bitstream) + 7) / 8);
     //bitpacker_flush(ctx->bitstream);
 
+    // recover image from precinct(s)
+
+    precinct_t* precinct_top[MAX_PREC_COLS];
+
+    ids_construct(&ids, &image, xs_config.p.NLx, xs_config.p.NLy, xs_config.p.Sd, xs_config.p.Cw, xs_config.p.Lh);
+
+    for (int column = 0; column < ids.npx; column++)
+    {
+        //precinct[column] = precinct_open_column(&ids, xs_config.p.N_g, column);
+        precinct_top[column] = precinct_open_column(&ids, xs_config.p.N_g, column);
+        precinct_copy(precinct_top[column], precinct[column]); // <- ???
+    }
+
+    for (int line_idx = 0; line_idx < ids.h; line_idx += ids.ph)
+    {
+        //unpacked_info_t unpack_out;
+        const int prec_y_idx = (line_idx / ids.ph);
+        for (int column = 0; column < ids.npx; column++)
+        {
+            precinct_set_y_idx_of(precinct[column], prec_y_idx);
+            const int first_of_slice = precinct_is_first_of_slice(precinct[column], xs_config.p.slice_height);
+
+            /*if (first_of_slice && column == 0)
+            {
+                int slice_idx_check;
+                xs_parse_slice_header(ctx->bitstream, &slice_idx_check);
+                assert(slice_idx_check == (slice_idx++));
+                if (ctx->xs_config->verbose > 1)
+                {
+                    fprintf(stderr, "Read Slice Header (slice_idx=%d)\n", slice_idx_check);
+                }
+            }
+
+#ifdef PACKING_GENERATE_FRAGMENT_CODE
+            const int extra_bits_before_precinct = (int)(bitunpacker_consumed_bits(ctx->bitstream) - bitstream_pos);
+#else
+            const int extra_bits_before_precinct = 0;
+#endif
+            if (unpack_precinct(ctx->unpack_ctx, ctx->bitstream, ctx->precinct[column],
+                (!first_of_slice) ? ctx->precinct_top[column] : NULL, ctx->gtlis_table_top[column],
+                &unpack_out, extra_bits_before_precinct) < 0)
+            {
+                if (ctx->xs_config->verbose) fprintf(stderr, "Corrupted codestream! line number %d\n", line_idx);
+                return false;
+            }
+            bitstream_pos = bitunpacker_consumed_bits(ctx->bitstream);*/
+
+            dequantize_precinct(precinct[column], /*unpack_out*/rc_results.gtli_table_data, xs_config.p.Qpih);
+
+            precinct_to_image(precinct[column], &image/*_out*/, xs_config.p.Fq); // image_out_create !!!
+
+            swap_ptrs(&precinct_top[column], &precinct[column]);
+            //memcpy(ctx->gtlis_table_top[column], unpack_out.gtli_table_gcli, MAX_NBANDS * sizeof(int));
+        }
+    }
+
 
     // IDWT (inverse DWT)
     dwt_inverse_transform(&ids, &image);

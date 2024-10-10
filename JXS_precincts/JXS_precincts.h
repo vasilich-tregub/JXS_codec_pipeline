@@ -38,3 +38,29 @@ struct rate_control_t
 
 	//precinct_budget_info_t* pbinfo;
 };
+
+void swap_ptrs(precinct_t** p1, precinct_t** p2)
+{
+	precinct_t* tmp = *p1;
+	*p1 = *p2;
+	*p2 = tmp;
+}
+
+struct xs_dec_context_t
+{
+	const xs_config_t* xs_config;
+	ids_t ids;
+
+	precinct_t* precinct[MAX_PREC_COLS];
+	precinct_t* precinct_top[MAX_PREC_COLS];
+	int	gtlis_table_top[MAX_PREC_COLS][MAX_NBANDS];
+
+	//bit_unpacker_t* bitstream;
+	//unpacking_context_t* unpack_ctx;
+
+#ifdef PACKING_GENERATE_FRAGMENT_CODE
+	xs_fragment_info_cb_t user_fragment_info_cb;
+	void* user_fragment_info_context;
+	xs_buffering_fragment_t fragment_info_buf;
+#endif
+};
