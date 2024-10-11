@@ -146,7 +146,6 @@
     <ClInclude Include="precinct.h" />
     <ClInclude Include="quant.h" />
     <ClInclude Include="rate_control.h" />
-    <ClInclude Include="xs_config.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CREDIT.md" />

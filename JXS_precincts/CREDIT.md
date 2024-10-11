@@ -3,7 +3,8 @@
 The JXS\_codec\_workflow is a derivative work and includes in their entirety the files from the ISO-IEC 21122 (5)
 software package individually specified in the projects of this solution.
 
-For the convinience of users, the following header from the files common.h, dwt.h, ids.h, and dwt.c used in this project 
+For the convinience of users, the following header from the files buf\_mgmt.h, buf\_mgmt.c, common.h, dwt.h, dwt.c, 
+ids.h, ids.c, precinct.h, precinct.c, quant.h, rate\_control.h and rate\_control.c used in this project 
 
 <pre>/***************************************************************************
 ** intoPIX SA & Fraunhofer IIS (hereinafter the "Software Copyright       **
@@ -59,7 +60,8 @@ For the convinience of users, the following header from the files common.h, dwt.
 ** made, by implication, estoppel or otherwise.                           **
 ***************************************************************************/</pre>
 
-is transferred into this document and cover the content of 
-the files common.h, dwt.h, ids.h, and dwt.c used in this project. 
+is transferred to this document and cover the content of 
+the files buf\_mgmt.h, buf\_mgmt.c, common.h, dwt.h, dwt.c, ids.h, ids.c, 
+precinct.h, precinct.c, quant.h, rate\_control.h and rate\_control.c used in this project. 
 I thereby confirm my commitment to respecting the intellectual property of 
 intoPIX SA & Fraunhofer IIS, the "Software Copyright Holder".

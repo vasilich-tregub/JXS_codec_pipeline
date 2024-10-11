@@ -4,8 +4,6 @@
 extern "C" {
 #include "dwt.h"
 #include "ids.h"
-#include <stdio.h>
-#include <malloc.h>
 #include "precinct.h"
 #include "rate_control.h"
 }
@@ -33,25 +31,33 @@ int main()
     xs_image_t image{};
     ids_t ids{};
 
-    // create a source 8-bit depth RGB image 
-    // and a corresponding ids structure of 
-    // which only ncomps, w, h, sd and nlvy fields
-    // are required in this exercise 
-    // (see image_create.h header, in other projects 
-    // a function parameter be used to create
-    // a selectable image)
-    if (image_create(image, ids) != 0)
+    // create a source 8-bit depth RGB image of
+    if (image_create(image) != 0)
     {
-        printf("cannot create image nor fill ids_t structure, exit\n");
+        printf("cannot create image, exit\n");
         return -1;
     }
-    std::vector<uint8_t> buf(image.width * image.height);
+    image_paint(image);
+
+    std::vector<uint32_t> buf(image.width * image.height);
     for (int i = 0; i < image.width * image.height; ++i)
     {
-        buf[i] = image.comps_array[0][i];
+        buf[i] = (image.comps_array[0][i] * 256 + image.comps_array[1][i]) * 256 + image.comps_array[2][i];
     }
     if (image_write(image.width, image.height, buf, L"source_image.png"))
         printf("cannot write image file 'source_image.png'\n");
+
+    //create xs_config specific for example images
+    xs_config_t xs_config{};
+    xs_config.p.NLx = 5; 
+    xs_config.p.NLy = 1; // can be 0 or 2
+    xs_config.p.Sd = 0;
+    xs_config.p.N_g = 4;
+    xs_config.p.Fq = 8; 
+    xs_config.p.Lh = 0;
+    xs_config.p.slice_height = 16;
+
+    ids_construct(&ids, &image, xs_config.p.NLx, xs_config.p.NLy, xs_config.p.Sd, xs_config.p.Cw, xs_config.p.Lh);
 
     // JPEG XS workflow requires to upscale image data to 20 bit precision
     uint8_t Bw = 20;
@@ -91,35 +97,36 @@ int main()
     // create an illustration of DWT-transformed image by truncation of int32_t pixels into bytes
     for (int i = 0; i < image.width * image.height; ++i)
     {
-        buf[i] = image.comps_array[0][i] / 256 / 16;
+        buf[i] = (image.comps_array[0][i] / 256 / 16 * 256 + image.comps_array[1][i] / 256 / 16) * 256 + image.comps_array[2][i] / 256 / 16;
     }
-    // and save this picture to image file
+    // and save this picture to png file
     if (image_write(image.width, image.height, buf, L"image_after_inline_DWT.png"))
         printf("cannot write image file 'image_after_inline_DWT.png'\n");
 
     // create precinct(s) from image
-    precinct_t* precinct[MAX_PREC_COLS]{};
-    rate_control_t* rc[MAX_PREC_COLS]{};
+    std::vector<std::vector<precinct_t*>> precinct;
+    std::vector<std::vector<rate_control_t*>> rc;
 
-    rc_results_t rc_results{};
+    std::vector<std::vector<rc_results_t>> rc_results; // rc_results[..]
     int slice_idx = 0;
     int markers_len = 0;
 
-    xs_config_t xs_config{};
-    xs_config.p.NLx = 5; 
-    xs_config.p.NLy = 1; 
-    xs_config.p.Sd = 0;
-    xs_config.p.N_g = 4;
-    xs_config.p.Fq = 8; 
-    xs_config.p.Lh = 0;
-    xs_config.p.slice_height = 16;
-
-    ids_construct(&ids, &image, xs_config.p.NLx, xs_config.p.NLy, xs_config.p.Sd, xs_config.p.Cw, xs_config.p.Lh);
-
-    for (int column = 0; column < ids.npx; column++)
+    precinct.resize(image.height);
+    rc.resize(image.height);
+    rc_results.resize(image.height);
+    for (int i = 0; i < image.height; ++i)
     {
-        rc[column] = rate_control_open(&xs_config, &ids, column);
-        precinct[column] = precinct_open_column(&ids, xs_config.p.N_g, column);
+        precinct[i].resize(ids.npx);
+        rc[i].resize(ids.npx);
+        rc_results[i].resize(ids.npx);
+    }
+    for (int line_idx = 0; line_idx < image.height; line_idx += ids.ph)
+    {
+        for (int column = 0; column < ids.npx; column++)
+        {
+            rc[line_idx][column] = rate_control_open(&xs_config, &ids, column);
+            precinct[line_idx][column] = precinct_open_column(&ids, xs_config.p.N_g, column);
+        }
     }
 
     for (int line_idx = 0; line_idx < image.height; line_idx += ids.ph)
@@ -127,18 +134,18 @@ int main()
         const int prec_y_idx = (line_idx / ids.ph);
         for (int column = 0; column < ids.npx; ++column)
         {
-            precinct_set_y_idx_of(precinct[column], prec_y_idx);
-            precinct_from_image(precinct[column], &image, xs_config.p.Fq); //ctx.xs_config->p.Fq
+            precinct_set_y_idx_of(precinct[line_idx][column], prec_y_idx);
+            precinct_from_image(precinct[line_idx][column], &image, xs_config.p.Fq); //ctx.xs_config->p.Fq
 
-            update_gclis(precinct[column]);
+            update_gclis(precinct[line_idx][column]);
 
-            if (rate_control_process_precinct(rc[column], precinct[column], &rc_results) < 0) {
+            if (rate_control_process_precinct(rc[0][column], precinct[line_idx][column], &rc_results[line_idx][column]) < 0) { // rc_results[..]
                 return false;
             }
 
-            quantize_precinct(precinct[column], rc_results.gtli_table_data, xs_config.p.Qpih);
+            quantize_precinct(precinct[line_idx][column], rc_results[line_idx][column].gtli_table_data, xs_config.p.Qpih);
 
-            if (precinct_is_first_of_slice(precinct[column], xs_config.p.slice_height) && (column == 0))
+            if (precinct_is_first_of_slice(precinct[line_idx][column], xs_config.p.slice_height) && (column == 0))
             {
                 if (xs_config.verbose > 1)
                 {
@@ -147,12 +154,12 @@ int main()
                 //markers_len += xs_write_slice_header(ctx->bitstream, slice_idx++);
             }
 
-            /*if (pack_precinct(ctx->packer, ctx->bitstream, ctx->precinct[column], &rc_results) < 0)
+            /*if (pack_precinct(ctx->packer, ctx->bitstream, ctx->precinct[line_idx][column], &rc_results) < 0)
             {
                 return false;
             }*/
 
-            if (rc_results.rc_error == 1)
+            if (rc_results[line_idx][column].rc_error == 1)
                 break;
         }
     }
@@ -162,17 +169,25 @@ int main()
     //*codestream_byte_size = ((bitpacker_get_len(ctx->bitstream) + 7) / 8);
     //bitpacker_flush(ctx->bitstream);
 
+    // draw precincts as image file
+
     // recover image from precinct(s)
+    xs_image_t image_out{}; // create empty image with identical structure to source umage
+    if (image_create(image_out) != 0)
+    {
+        printf("cannot create target image, exit\n");
+        return -1;
+    }
 
-    precinct_t* precinct_top[MAX_PREC_COLS];
+    std::vector<precinct_t*> precinct_top;
+    precinct_top.resize(ids.npx);
 
-    ids_construct(&ids, &image, xs_config.p.NLx, xs_config.p.NLy, xs_config.p.Sd, xs_config.p.Cw, xs_config.p.Lh);
+    //ids_construct(&ids, &image, xs_config.p.NLx, xs_config.p.NLy, xs_config.p.Sd, xs_config.p.Cw, xs_config.p.Lh);
 
     for (int column = 0; column < ids.npx; column++)
     {
-        //precinct[column] = precinct_open_column(&ids, xs_config.p.N_g, column);
+        //precinct[0][column] = precinct_open_column(&ids, xs_config.p.N_g, column);
         precinct_top[column] = precinct_open_column(&ids, xs_config.p.N_g, column);
-        precinct_copy(precinct_top[column], precinct[column]); // <- ???
     }
 
     for (int line_idx = 0; line_idx < ids.h; line_idx += ids.ph)
@@ -181,8 +196,8 @@ int main()
         const int prec_y_idx = (line_idx / ids.ph);
         for (int column = 0; column < ids.npx; column++)
         {
-            precinct_set_y_idx_of(precinct[column], prec_y_idx);
-            const int first_of_slice = precinct_is_first_of_slice(precinct[column], xs_config.p.slice_height);
+            precinct_set_y_idx_of(precinct[line_idx][column], prec_y_idx);
+            const int first_of_slice = precinct_is_first_of_slice(precinct[line_idx][column], xs_config.p.slice_height);
 
             /*if (first_of_slice && column == 0)
             {
@@ -200,7 +215,7 @@ int main()
 #else
             const int extra_bits_before_precinct = 0;
 #endif
-            if (unpack_precinct(ctx->unpack_ctx, ctx->bitstream, ctx->precinct[column],
+            if (unpack_precinct(ctx->unpack_ctx, ctx->bitstream, ctx->precinct[line_idx][column],
                 (!first_of_slice) ? ctx->precinct_top[column] : NULL, ctx->gtlis_table_top[column],
                 &unpack_out, extra_bits_before_precinct) < 0)
             {
@@ -209,23 +224,30 @@ int main()
             }
             bitstream_pos = bitunpacker_consumed_bits(ctx->bitstream);*/
 
-            dequantize_precinct(precinct[column], /*unpack_out*/rc_results.gtli_table_data, xs_config.p.Qpih);
+            dequantize_precinct(precinct[line_idx][column], /*unpack_out*/rc_results[line_idx][column].gtli_table_data, xs_config.p.Qpih); // rc_results[..]
 
-            precinct_to_image(precinct[column], &image/*_out*/, xs_config.p.Fq); // image_out_create !!!
+            precinct_to_image(precinct[line_idx][column], &image_out, xs_config.p.Fq); // image_out_create !!!
 
-            swap_ptrs(&precinct_top[column], &precinct[column]);
+            //swap_ptrs(&precinct_top[column], &precinct[line_idx][column]);
             //memcpy(ctx->gtlis_table_top[column], unpack_out.gtli_table_gcli, MAX_NBANDS * sizeof(int));
         }
     }
 
+    // save precinct_to_image to png file
+    for (int i = 0; i < len; ++i)
+    {
+        buf[i] = (image_out.comps_array[0][i] / 256 / 16 * 256 + image_out.comps_array[1][i] / 256 / 16) * 256 + image_out.comps_array[2][i] / 256 / 16;
+    }
+    if (image_write(image_out.width, image_out.height, buf, L"precinct_to_image.png"))
+        printf("cannot write image file 'precinct_to_image.png'\n");
 
     // IDWT (inverse DWT)
-    dwt_inverse_transform(&ids, &image);
+    dwt_inverse_transform(&ids, &image_out);
 
     // inverse reversible color transform (to YCbCr) for light444.12 profile with XS_CPIH_RCT marker
-    c0 = image.comps_array[0];
-    c1 = image.comps_array[1];
-    c2 = image.comps_array[2];
+    c0 = image_out.comps_array[0];
+    c1 = image_out.comps_array[1];
+    c2 = image_out.comps_array[2];
     for (int i = 0; i < len; ++i)
     {
         const xs_data_in_t tmp = *c0 - ((*c1 + *c2) >> 2);
@@ -237,11 +259,11 @@ int main()
 
     // downscale from 20 bit precision
     const xs_data_in_t dclev_and_rounding = ((1 << Bw) >> 1) + ((1 << s) >> 1);
-    const xs_data_in_t max_val = (1 << image.depth) - 1;
-    for (int c = 0; c < image.ncomps; ++c)
+    const xs_data_in_t max_val = (1 << image_out.depth) - 1;
+    for (int c = 0; c < image_out.ncomps; ++c)
     {
-        const size_t sample_count = (size_t)(image.width) * (size_t)(image.height);
-        xs_data_in_t* the_ptr = image.comps_array[c];
+        const size_t sample_count = (size_t)(image_out.width) * (size_t)(image_out.height);
+        xs_data_in_t* the_ptr = image_out.comps_array[c];
         for (size_t i = sample_count; i != 0; --i)
         {
             *the_ptr = clamp((*the_ptr + dclev_and_rounding) >> s, max_val);
@@ -249,15 +271,17 @@ int main()
         }
     }
 
-    // save recovered image to file
-    std::vector<uint8_t> buffer(len);
+    // save recovered image to png file
     for (int i = 0; i < len; ++i)
     {
-        buffer[i] = image.comps_array[0][i];
+        buf[i] = (image_out.comps_array[0][i] * 256 + image_out.comps_array[1][i]) * 256 + image_out.comps_array[2][i];
     }
-    if (image_write(image.width, image.height, buffer, L"recovered_image.png"))
-        printf("cannot write image file 'recovered_image.png'\n");
+    if (image_write(image_out.width, image_out.height, buf, L"recovered_image.png"))
+        printf("cannot write target image file 'recovered_image.png'\n");
 
-    printf("You see an example of precinct creation in this exercise.\n");
+    printf("You see an example of precinct operations in this exercise.\n");
+    printf("Precincts are created after DWT, later image_out is retrieved \n");
+    printf("from the precincts, is saved to the png file, \n");
+    printf("and the JXS pipeline continues to recover the source image. \n");
 }
 

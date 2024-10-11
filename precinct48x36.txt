@@ -1,8 +1,0 @@
--gclis_mb	0x000001e546a9ade0 {magic=311911785 n_buffers=24 sizes=0x000001e546ac8410 {1} ...}	multi_buf_t *
-+		sig_mag_data_mb	0x000001e546a9b360 {magic=311911785 n_buffers=24 sizes=0x000001e546ac84b0 {4} ...}	multi_buf_t *
-+		ids	0x000001e546a74318 {ncomps=3 '\x3' w=48 h=36 ...}	const ids_t *
-		group_size	4	int
-+		idx_from_level	0x000001e546acafcc {0x000001e546acafcc {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, ...}, ...}	int[4][52]
-		y_idx	-1	int
-		column	0	int
-		is_last_column	1	int

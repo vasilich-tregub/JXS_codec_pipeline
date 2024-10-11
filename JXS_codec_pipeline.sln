@@ -7,10 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_wavelet_transform", "JX
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{682D822B-2726-444E-9BC1-4407CC7FB19B}"
 	ProjectSection(SolutionItems) = preProject
-		config48x36.txt = config48x36.txt
-		ctx48x36.txt = ctx48x36.txt
-		ids(48x36).txt = ids(48x36).txt
-		precinct48x36.txt = precinct48x36.txt
 		README.md = README.md
 	EndProjectSection
 EndProject

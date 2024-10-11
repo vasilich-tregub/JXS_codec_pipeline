@@ -20,3 +20,15 @@ to provide for a diversity of image data including image data read from image fi
 
 The header image\_write.h writes the generated images to files, using Microsoft WIC component, and later can be modified 
 to use a crossplatform cairo library for the purpose.
+
+In the second project, JXS\_precincts, operations of precinct creation from the DWT result data and restoring this data with 
+precinct_to_image calls is inserted between dwt\_forward\_transform and dwt\_inverse\_transform calls. The image generated with 
+the precinct_to_image call is written to the png file. The example image in this project is 3840x2160, so the processing can take 
+a while and uses 694 MB of RAM. This memory consumption is the result of unfolding precincts in memory arrays instead of writing 
+these to stream. It is made on purpose to help student examine the precinct operations. You can vary the dimensions of synthesized 
+image in the image\_create.h header file.
+
+So we have the model of encoder followed by the model of encoder in this project. THe data from encoder to decoder are passed 
+through memory here, rather than via stream.
+
+This project lays the foundation for examining the rate control mechanism in the ISO 21122 (5) reference software packet.

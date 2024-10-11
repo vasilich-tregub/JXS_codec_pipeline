@@ -12,7 +12,7 @@ inline void SafeRelease(T*& p)
     }
 }
 
-int image_write(int width, int height, std::vector<uint8_t>& buffer, const wchar_t* filename)
+int image_write(int width, int height, std::vector<uint32_t>& buffer, const wchar_t* filename)
 {
     if (buffer.size() != width * height)
         return -1;
@@ -28,9 +28,18 @@ int image_write(int width, int height, std::vector<uint8_t>& buffer, const wchar
     );
     IWICBitmap* bitmap = nullptr;
 
+    std::vector<uint8_t> bytebuffer(4 * width * height);
+    for (int i = 0; i < buffer.size(); ++i)
+    {
+        bytebuffer[4 * i] = buffer[i];
+        bytebuffer[4 * i + 1] = buffer[i] / 256;
+        bytebuffer[4 * i + 2] = buffer[i] / 256 / 256;
+        bytebuffer[4 * i + 3] = 255;
+    }
+
     hr = wicFactory->CreateBitmapFromMemory(width, height,
-        GUID_WICPixelFormat8bppGray, width,
-        (unsigned int)buffer.size(), buffer.data(),
+        GUID_WICPixelFormat32bppRGB, 4 * width,
+        (unsigned int)bytebuffer.size(), bytebuffer.data(),
         &bitmap);
 
     IWICStream* wicStream = nullptr;
