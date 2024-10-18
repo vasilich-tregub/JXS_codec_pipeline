@@ -1,7 +1,7 @@
 # Credits
 ## Notice
-The JXS\_codec\_workflow is a derivative work and includes in their entirety the files from the ISO-IEC 21122 (5)
-software package individually specified in the projects of this solution.
+The JXS\_precincts is a derivative work and includes in their entirety the files from 
+the ISO-IEC 21122 (5) software package.
 
 For the convinience of users, the following header from the files buf\_mgmt.h, buf\_mgmt.c, common.h, dwt.h, dwt.c, 
 ids.h, ids.c, precinct.h, precinct.c, quant.h, rate\_control.h and rate\_control.c used in this project 

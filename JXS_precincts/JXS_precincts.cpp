@@ -50,7 +50,7 @@ int main()
     //create xs_config specific for example images
     xs_config_t xs_config{};
     xs_config.p.NLx = 5; 
-    xs_config.p.NLy = 1; // can be 0 or 2
+    xs_config.p.NLy = 2; // can be 0, 1 or 2
     xs_config.p.Sd = 0;
     xs_config.p.N_g = 4;
     xs_config.p.Fq = 8; 

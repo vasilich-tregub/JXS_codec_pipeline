@@ -1,7 +1,7 @@
 # Credits
 ## Notice
-The JXS\_codec\_workflow is a derivative work and includes in their entirety the files from the ISO-IEC 21122 (5)
-software package individually specified in the projects of this solution.
+The JXS\_wavelet\_transform project is a derivative work and includes in their entirety the files 
+from the ISO-IEC 21122 (5) software package.
 
 For the convinience of users, the following header from the files common.h, dwt.h, ids.h, and dwt.c used in this project 
 

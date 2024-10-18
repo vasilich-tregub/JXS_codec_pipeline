@@ -1,7 +1,6 @@
 #pragma once
-#include "libjxs_for_XS_precincts_exercise.h"
-#include "ids.h"
 #include <malloc.h>
+#include "SvtJpegxs.h"
 
 int image_create(xs_image_t& image)
 {
