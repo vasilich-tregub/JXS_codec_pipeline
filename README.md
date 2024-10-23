@@ -34,9 +34,9 @@ through memory here, rather than via stream.
 
 This project lays the foundation for examining the rate control mechanism in the ISO 21122 (5) reference software packet.
 
-The project SvtJxs\_breakdown is based off another implementation of the ISO 21122 (ed.3) standard, this of Intel Corporation.
+<!-- The project SvtJxs\_breakdown is based off another implementation of the ISO 21122 (ed.3) standard, this of Intel Corporation.
 The point of this excursion is to show that both implementations are consistent with one another. Also, I believe that 
 the Intel Corporation implementation gives more convenient structures representing precincts. Any way, the diagrams from 
 their github repository, https://github.com/OpenVisualCloud/SVT-JPEG-XS/blob/main/documentation/encoder/svt-jpegxs-encoder-design.md 
 and https://github.com/OpenVisualCloud/SVT-JPEG-XS/blob/main/documentation/decoder/svt-jpegxs-decoder-design.md contain clear, 
-unambiguous visuals representing band arrangement after DWT decomposition.
+unambiguous visuals representing band arrangement after DWT decomposition. -->

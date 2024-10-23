@@ -36,15 +36,34 @@ int main()
     // (see image_create.h header, in other projects 
     // a function parameter be used to create
     // a selectable image)
-    if (image_create(image, ids) != 0)
+    if (image_create(image) != 0)
     {
-        printf("cannot create image nor fill ids_t structure, exit\n");
+        printf("cannot create image, exit\n");
         return -1;
     }
-    std::vector<uint8_t> buf(image.width * image.height);
+    image_paint(image);
+
+    //ids_construct(&ids, &image, cfgpNLx, cfgpNLy, cfgpSd, xs_config.p.Cw, xs_config.p.Lh);
+    ids.ncomps = image.ncomps;
+    ids.w = image.width;
+    ids.h = image.height;
+    ids.sd = 0; // suppressed decomp comp count sd;
+    ids.nlxy.x = 5; // ndecomp_h = 5;
+    ids.nlxy.y = 2; // ndecomp_v = 2;
+    ids.nb = 2 * ids.nlxy.y + ids.nlxy.x + 1;
+    for (int k = 0; k < image.ncomps; ++k)
+    {
+        ids.nlxyp[k].x = ids.nlxy.x;
+        ids.nlxyp[k].y = ids.nlxy.y; // -(im->sy[c] >> 1); // no CFA defined, all image.sx, image.sy = 1
+        ids.comp_w[k] = ids.w;
+        ids.comp_h[k] = ids.h;
+    }
+
+
+    std::vector<uint32_t> buf(image.width * image.height);
     for (int i = 0; i < image.width * image.height; ++i)
     {
-        buf[i] = image.comps_array[0][i];
+        buf[i] = (image.comps_array[0][i] * 256 + image.comps_array[1][i]) * 256 + image.comps_array[2][i];
     }
     if (image_write(image.width, image.height, buf, L"source_image.png"))
         printf("cannot write image file 'source_image.png'\n");
@@ -86,7 +105,7 @@ int main()
     // create an illustration of DWT-transformed image by truncation of int32_t pixels into bytes
     for (int i = 0; i < image.width * image.height; ++i)
     {
-        buf[i] = image.comps_array[0][i] / 256 / 16;
+        buf[i] = image.comps_array[0][i] / 256 / 4;
     }
     // and save this picture to image file
     if (image_write(image.width, image.height, buf, L"image_after_inline_DWT.png"))
@@ -123,12 +142,11 @@ int main()
     }
 
     // save recovered image to file
-    std::vector<uint8_t> buffer(len);
     for (int i = 0; i < len; ++i)
     {
-        buffer[i] = image.comps_array[0][i];
+        buf[i] = (image.comps_array[0][i] * 256 + image.comps_array[1][i]) * 256 + image.comps_array[2][i];
     }
-    if (image_write(image.width, image.height, buffer, L"recovered_image.png"))
+    if (image_write(image.width, image.height, buf, L"recovered_image.png"))
         printf("cannot write image file 'recovered_image.png'\n");
     
     printf("You see an example of lossless wavelet transform in this exercise.\n");
@@ -139,4 +157,5 @@ int main()
     printf("after inline DWT on source_image and is only created to illustrate ");
     printf("an uncoventional picture of approx and details coeffs with JPEG XS wavelet decomposition.\n");
     printf("A useful exercise is to vary ids.nlxy.y values (0, 1, 2) and see how the picture changes.\n");
+    printf("In this exercise (only) you can also vary ids.nlxy.x values (0, ..., 7) provided ids.nlxy.x >= ids.nlxy.y.\n");
 }
