@@ -107,7 +107,11 @@ int main()
     // create an illustration of DWT-transformed image by truncation of int32_t pixels into bytes
     for (int i = 0; i < image.width * image.height; ++i)
     {
-        buf[i] = image.comps_array[0][i] / 256 / 4;
+        int rs = 256 * 16; // right shift, 12 bit positions
+        buf[i] = 
+            (uint8_t)(image.comps_array[0][i] / rs) * 256 * 256 + // red
+            (uint8_t)(image.comps_array[1][i] / rs) * 256 + // green
+            (uint8_t)(image.comps_array[2][i] / rs); // blue
     }
     // and save this picture to image file
     if (image_write(image.width, image.height, buf, L"decomposition_after_inline_DWT.png"))
