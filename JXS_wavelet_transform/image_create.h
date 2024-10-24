@@ -5,8 +5,8 @@
 
 int image_create(xs_image_t& image)
 {
-    const int WIDTH = 1024; // 3840;
-    const int HEIGHT = 1024; // 2160;
+    const int WIDTH = 1920; // 3840;
+    const int HEIGHT = 1080; // 2160;
 
     image.ncomps = 3;
     image.depth = 8;

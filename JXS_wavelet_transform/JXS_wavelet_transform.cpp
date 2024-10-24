@@ -29,7 +29,7 @@ int main()
     xs_image_t image{};
     ids_t ids{};
 
-    // create a source 8-bit depth RGB image 
+    // create a source 24-bit RGB image (8 bit depth)
     // and a corresponding ids structure of 
     // which only ncomps, w, h, sd and nlvy fields
     // are required in this exercise 
@@ -44,12 +44,14 @@ int main()
     image_paint(image);
 
     //ids_construct(&ids, &image, cfgpNLx, cfgpNLy, cfgpSd, xs_config.p.Cw, xs_config.p.Lh);
+    int8_t/*nibble*/ ndecomp_h = 1; // 5;
+    int8_t/*nibble*/ ndecomp_v = 1; // 2;
     ids.ncomps = image.ncomps;
     ids.w = image.width;
     ids.h = image.height;
     ids.sd = 0; // suppressed decomp comp count sd;
-    ids.nlxy.x = 5; // ndecomp_h = 5;
-    ids.nlxy.y = 2; // ndecomp_v = 2;
+    ids.nlxy.x = ndecomp_h;
+    ids.nlxy.y = ndecomp_v;
     ids.nb = 2 * ids.nlxy.y + ids.nlxy.x + 1;
     for (int k = 0; k < image.ncomps; ++k)
     {
@@ -108,9 +110,49 @@ int main()
         buf[i] = image.comps_array[0][i] / 256 / 4;
     }
     // and save this picture to image file
-    if (image_write(image.width, image.height, buf, L"image_after_inline_DWT.png"))
-        printf("cannot write image file 'image_after_inline_DWT.png'\n");
-
+    if (image_write(image.width, image.height, buf, L"decomposition_after_inline_DWT.png"))
+        printf("cannot write image file 'decomposition_after_inline_DWT.png'\n");
+    // re-order picture with (ndecomp_h, ndecomp_v) stencils into classical decomposition picture, 
+    // (AA, LH, HL, HH), or (AA, HD, VD, DD) in MATLAB convention. Only ndecomp_h = 1, ndecomp_v = 1 is shown, 
+    // other (ndecomp_h, ndecomp_v) values may follow suit later
+    if (ndecomp_h == 1 && ndecomp_v == 1)
+    {
+        int rs = 256 * 16; // right shift, 12 bit positions
+        for (int iy = 0; iy < image.height / 2; ++iy)
+        {
+            for (int ix = 0; ix < image.width / 2; ++ix)
+            {
+                int stride = image.width;
+                int iCC = 2 * iy * stride + 2 * ix; // top left stencil corner
+                int iLL = iy * image.width + ix;
+                int iLH = iy * image.width + ix + image.width / 2;
+                int iHL = (iy + image.height / 2) * image.width + ix;
+                int iHH = (iy + image.height / 2) * image.width + ix + image.width / 2;
+                buf[iLL] = // Approximation coeffs
+                    (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                buf[iLH] = // horizontal detail coeffs
+                    (uint8_t)(image.comps_array[0][iCC + 1] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC + 1] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC + 1] / rs); // blue
+                buf[iHL] = // vertical detail coeffs
+                    (uint8_t)(image.comps_array[0][iCC + stride] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC + stride] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC + stride] / rs); // blue
+                buf[iHH] = // diagonal detail coeffs
+                    (uint8_t)(image.comps_array[0][iCC + stride + 1] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC + stride + 1] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC + stride + 1] / rs); // blue
+            }
+        }
+        if (image_write(image.width, image.height, buf, L"re-ordered_decomposition.png"))
+            printf("cannot write image file 're-ordered_decomposition.png'\n");
+    }
+    else
+    {
+            printf("decomp_H/V!=1, image file 're-ordered_decomposition.png unaltered from previous run'\n");
+    }
     // IDWT (inverse DWT)
     dwt_inverse_transform(&ids, &image);
     
