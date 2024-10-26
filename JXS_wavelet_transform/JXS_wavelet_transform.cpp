@@ -61,6 +61,8 @@ int main()
         ids.comp_h[k] = ids.h;
     }
 
+    if (ndecomp_v > ndecomp_h)
+        printf("ndecomp_v > ndecomp_h, exit\n");
 
     std::vector<uint32_t> buf(image.width * image.height);
     for (int i = 0; i < image.width * image.height; ++i)
@@ -70,7 +72,7 @@ int main()
     if (image_write(image.width, image.height, buf, L"source_image.png"))
         printf("cannot write image file 'source_image.png'\n");
 
-    // JPEG XS workflow requires to upscale image data to 20 bit precision
+    // JPEG XS pipeline requires to upscale image data to 20 bit precision
     uint8_t Bw = 20;
     const uint8_t s = Bw - (uint8_t)image.depth;
     const xs_data_in_t dclev = ((1 << Bw) >> 1);
@@ -85,7 +87,7 @@ int main()
         }
     }
 
-    // JPEG XS workflow requires to apply reversible color transform (to YCbCr) 
+    // JPEG XS pipeline requires to apply reversible color transform (to YCbCr) 
     // for images like RGB 8 bit per component, no CFA (the image of this exercize 
     // can be classified into light444.12 profile with a XS_CPIH_RCT marker)
     const int len = image.width * image.height;
@@ -104,69 +106,109 @@ int main()
 
     // DWT forward
     dwt_forward_transform(&ids, &image);
-    // create an illustration of DWT-transformed image by truncation of int32_t pixels into bytes
+    // create an illustration of DWT-transformed image by truncation of int32_t component values into bytes
     for (int i = 0; i < image.width * image.height; ++i)
     {
-        int rs = 256 * 16; // right shift, 12 bit positions
+        int rs = 1 << 12; // right shift, 12 bit positions
         buf[i] = 
             (uint8_t)(image.comps_array[0][i] / rs) * 256 * 256 + // red
             (uint8_t)(image.comps_array[1][i] / rs) * 256 + // green
             (uint8_t)(image.comps_array[2][i] / rs); // blue
     }
-    // and save this picture to image file
+    // and save this picture to image file. Notice that DWT of JPEGXS codec creates an INTERLEAVED tranform:
+    // you would not readily discern the bands in the picture
     if (image_write(image.width, image.height, buf, L"decomposition_after_inline_DWT.png"))
         printf("cannot write image file 'decomposition_after_inline_DWT.png'\n");
 
-    // re-order picture with (ndecomp_h, ndecomp_v) stencils into classical decomposition picture: 
-    // for example, for ndecomp_h = 1, ndecomp_v = 1 it would look like
-    // (AA, LH, HL, HH), or (AA, HD, VD, DD) in MATLAB convention.
-    
+    // de-interleave coefficients for test imaging:     
     int stride = image.width;
-    int rs = 256 * 16; // right shift, 12 bit positions
-    int cellw = image.width / (1 << ndecomp_h); // cell width
-    if (ndecomp_v == 0)
+    int rs = 1 << 12; // right shift, 12 bit positions
+    int dwidth = image.width / 2;
+    int dheight = image.height / 2;
+    for (int lvl = 1; lvl <= ndecomp_v; ++lvl)
     {
-        for (int lvlhor = 0; lvlhor <= (1 << ndecomp_h) - 1; ++lvlhor)
+        int d = 1 << (lvl - 1);
+        for (int iy = 0; iy < dheight / d; ++iy)
         {
-            int cell0x = lvlhor * cellw; // cell origin X
+            for (int ix = 0; ix < dwidth / d; ++ix)
+            {
+                int stride = image.width;
+                int iCC = d * 2 * iy * stride + d * 2 * ix; // X, Y multiples of 1 << lvl
+                int iLL = iy * stride + ix;
+                int iLH = iy * stride + ix + dwidth / d;
+                int iHL = (iy + dheight / d) * stride + ix;
+                int iHH = (iy + dheight / d) * stride + ix + dwidth / d;
+                buf[iLL] = // Approximation coeffs
+                    (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                buf[iLH] = // horizontal detail coeffs
+                    (uint8_t)(image.comps_array[0][iCC + d] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC + d] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC + d] / rs); // blue
+                buf[iHL] = // vertical detail coeffs
+                    (uint8_t)(image.comps_array[0][iCC + stride * d] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC + stride * d] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC + stride * d] / rs); // blue
+                buf[iHH] = // diagonal detail coeffs
+                    (uint8_t)(image.comps_array[0][iCC + stride * d + d] / rs) * 256 * 256 + // red
+                    (uint8_t)(image.comps_array[1][iCC + stride * d + d] / rs) * 256 + // green
+                    (uint8_t)(image.comps_array[2][iCC + stride * d + d] / rs); // blue
+            }
+        }
+    }
+    for (int lvl = ndecomp_v + 1; lvl <= ndecomp_h; ++lvl)
+    {
+        int d = 1 << (lvl - 1);           // d only for horizontal coeffs
+        if (ndecomp_v > 0)
+        {
+            int dvert = 1 << (ndecomp_v - 1); // no vertical decomposition from here
+            for (int iy = 0; iy < dheight / dvert; ++iy)
+            {
+                for (int ix = 0; ix < dwidth / d; ++ix)
+                {
+                    int stride = image.width;
+                    int iCC = dvert * 2 * iy * stride + 2 * d * ix; // X multiple of 1 << lvl
+                    int iLL = iy * stride + ix;
+                    int iLH = iy * stride + ix + dwidth / d;
+                    buf[iLL] = // Approximation coeffs
+                        (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
+                        (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
+                        (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                    buf[iLH] = // horizontal detail coeffs
+                        (uint8_t)(image.comps_array[0][iCC + d] / rs) * 256 * 256 + // red
+                        (uint8_t)(image.comps_array[1][iCC + d] / rs) * 256 + // green
+                        (uint8_t)(image.comps_array[2][iCC + d] / rs); // blue
+                }
+            }
+        }
+        else // zero decomp_v is exceptional, none vertical bands like H(n)L, H(n)H so iy runs entire image.height
+        {
             for (int iy = 0; iy < image.height; ++iy)
             {
-                for (int ix = 0, ixs = ix + lvlhor; ix < cellw && ixs < image.width; ++ix, ixs += (1 << ndecomp_h))
+                for (int ix = 0; ix < dwidth / d; ++ix)
                 {
-                    buf[iy * stride + cell0x + ix] =
-                        (uint8_t)(image.comps_array[0][iy * stride + ixs] / rs) * 256 * 256 + // red
-                        (uint8_t)(image.comps_array[1][iy * stride + ixs] / rs) * 256 + // green
-                        (uint8_t)(image.comps_array[2][iy * stride + ixs] / rs); // blue
+                    int stride = image.width;
+                    int iCC = iy * stride + 2 * d * ix; // X multiple of 1 << lvl
+                    int iLL = iy * stride + ix;
+                    int iLH = iy * stride + ix + dwidth / d;
+                    buf[iLL] = // Approximation coeffs
+                        (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
+                        (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
+                        (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                    buf[iLH] = // horizontal detail coeffs
+                        (uint8_t)(image.comps_array[0][iCC + d] / rs) * 256 * 256 + // red
+                        (uint8_t)(image.comps_array[1][iCC + d] / rs) * 256 + // green
+                        (uint8_t)(image.comps_array[2][iCC + d] / rs); // blue
                 }
             }
         }
     }
-    else
-    {
-        int cellh = image.height / (1 << ndecomp_v); // cell height
-        for (int lvlver = 0; lvlver <= (1 << ndecomp_v) - 1; ++lvlver) // lvlver is a vertical decomp level
-        {
-            int cell0y = lvlver * cellh; // cell origin Y
-            for (int lvlhor = 0; lvlhor <= (1 << ndecomp_h) - 1; ++lvlhor) // lvlver is a horizontal decomp level
-            {
-                int cell0x = lvlhor * cellw; // cell origin X
-                for (int iy = 0, iys = iy + lvlver; iy < cellh && iys < image.height; ++iy, iys += (1 << ndecomp_v))
-                {
-                    for (int ix = 0, ixs = ix + lvlhor; ix < cellw && ixs < image.width; ++ix, ixs += (1 << ndecomp_h))
-                    {
-                        buf[(cell0y + iy) * stride + (cell0x + ix)] =
-                            (uint8_t)(image.comps_array[0][iys * stride + ixs] / rs) * 256 * 256 + // red
-                            (uint8_t)(image.comps_array[1][iys * stride + ixs] / rs) * 256 + // green
-                            (uint8_t)(image.comps_array[2][iys * stride + ixs] / rs); // blue
-                    }
-                }
-            }
-        }
-    }
-    if (image_write(image.width, image.height, buf, L"re-ordered_decomposition.png"))
-        printf("cannot write image file 're-ordered_decomposition.png'\n");
+    if (image_write(image.width, image.height, buf, L"de-interleaved_decomposition.png"))
+        printf("cannot write image file 'de-interleaved_decomposition.png'\n");
 
-    // IDWT (inverse DWT)
+    // IDWT (inverse DWT). De-interleave operation used to draw "de-interleaved_decomposition.png"
+    // does not alter 'image', generated by DWT from source_image
     dwt_inverse_transform(&ids, &image);
     
     // inverse reversible color transform (to YCbCr) for light444.12 profile with XS_CPIH_RCT marker
@@ -210,10 +252,10 @@ int main()
     printf("from which data IDWT generates a recovered_image.\n");
     printf("Image 'decomposition_after_inline_DWT.png' is constructed \n");
     printf("from image.comps_array[0][i]/256/16 pixels after inline DWT \n");
-    printf("on source_image and is only created to illustrate an uncoventional picture\n ");
+    printf("on source_image and is only created to illustrate an interleaved picture\n ");
     printf("of approx and details coeffs with JPEG XS wavelet decomposition.\n");
-    printf("Code lines 124-167 re-order this unconventional picture of approx/detail coeffs \n");
-    printf("and draw the conventional picture into 're-ordered_decomposition.png'\n");
-    printf("A useful exercise is to vary ids.nlxy.y values (0, 1, 2) and see how the picture changes.\n");
-    printf("In this exercise (only) you can also vary ids.nlxy.x values (0, ..., 7), provided ids.nlxy.x >= ids.nlxy.y.\n");
+    printf("Code lines 124-206 de-interleave this interleaved picture of approx/detail coeffs \n");
+    printf("and draw the conventional picture into 'de-interleaved_decomposition.png'\n");
+    printf("A useful exercise is to vary ndecomp_v values (0, 1, 2) and see how the picture changes.\n");
+    printf("In this exercise (only) you can also vary ndecomp_h values (0, ..., 7), provided ndecomp_h >= ndecomp_v.\n");
 }
