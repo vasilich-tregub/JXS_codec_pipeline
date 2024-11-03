@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_precincts", "JXS_precincts\JXS_precincts.vcxproj", "{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_polyptych", "JXS_polyptych\JXS_polyptych.vcxproj", "{3E3E2006-A821-428A-985C-CFA4F5AC31DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -36,6 +38,14 @@ Global
 		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x64.Build.0 = Release|x64
 		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x86.ActiveCfg = Release|Win32
 		{3924A84F-2CA6-4CB8-A35A-66FD0352CDC8}.Release|x86.Build.0 = Release|Win32
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Debug|x64.ActiveCfg = Debug|x64
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Debug|x64.Build.0 = Debug|x64
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Debug|x86.ActiveCfg = Debug|Win32
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Debug|x86.Build.0 = Debug|Win32
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x64.ActiveCfg = Release|x64
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x64.Build.0 = Release|x64
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x86.ActiveCfg = Release|Win32
+		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
