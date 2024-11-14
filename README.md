@@ -32,7 +32,7 @@ image in the image\_create.h header file.
 So we have the model of encoder followed by the model of encoder in this project. The data from encoder to decoder are passed 
 through memory here, rather than via stream.
 
-This project lays the foundation for examining the rate control mechanism in the ISO 21122 (5) reference software packet.
+This project may later be extended for examining the rate control mechanism in the ISO 21122 (5) reference software packet.
 
 <!-- The project SvtJxs\_breakdown is based off another implementation of the ISO 21122 (ed.3) standard, this of Intel Corporation.
 The point of this excursion is to show that both implementations are consistent with one another. Also, I believe that 
@@ -40,3 +40,9 @@ the Intel Corporation implementation gives more convenient structures representi
 their github repository, https://github.com/OpenVisualCloud/SVT-JPEG-XS/blob/main/documentation/encoder/svt-jpegxs-encoder-design.md 
 and https://github.com/OpenVisualCloud/SVT-JPEG-XS/blob/main/documentation/decoder/svt-jpegxs-decoder-design.md contain clear, 
 unambiguous visuals representing band arrangement after DWT decomposition. -->
+
+The project JXS\_polyptych demonstrates an accidental art sometimes "spontaneously" created in the course of 
+image wavelet decomposition. With lucky selection of parameters the landscape can become transformed into 
+the tetraptych (or, in general, polyptich), sort of "Four Seasons" or "Morning, Afternoon, Evening, Night" 
+or something else. Most often, however, decomposition images resemble Piet Mondrian's 
+figurative paintings if any art at all.
