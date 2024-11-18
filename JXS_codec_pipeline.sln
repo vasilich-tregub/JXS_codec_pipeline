@@ -14,6 +14,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_precincts", "JXS_precin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_polyptych", "JXS_polyptych\JXS_polyptych.vcxproj", "{3E3E2006-A821-428A-985C-CFA4F5AC31DD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_decode_rearrange", "JXS_decode_rearrange\JXS_decode_rearrange.vcxproj", "{04475190-E91B-492F-9CE4-E6334DE78774}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -46,6 +48,14 @@ Global
 		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x64.Build.0 = Release|x64
 		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x86.ActiveCfg = Release|Win32
 		{3E3E2006-A821-428A-985C-CFA4F5AC31DD}.Release|x86.Build.0 = Release|Win32
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Debug|x64.ActiveCfg = Debug|x64
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Debug|x64.Build.0 = Debug|x64
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Debug|x86.ActiveCfg = Debug|Win32
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Debug|x86.Build.0 = Debug|Win32
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Release|x64.ActiveCfg = Release|x64
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Release|x64.Build.0 = Release|x64
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Release|x86.ActiveCfg = Release|Win32
+		{04475190-E91B-492F-9CE4-E6334DE78774}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

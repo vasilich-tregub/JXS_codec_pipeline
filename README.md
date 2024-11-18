@@ -46,3 +46,9 @@ image wavelet decomposition. With lucky selection of parameters the landscape ca
 the tetraptych (or, in general, polyptich), sort of "Four Seasons" or "Morning, Afternoon, Evening, Night" 
 or something else. Most often, however, decomposition images resemble Piet Mondrian's 
 figurative paintings if any art at all.
+
+The project JXS\_decode\_rearrange is an attempt to understand the purpose of including image files
+like 44.jxs with the archive part-4-refstreams.zip of ISO-IEC 21122 -4 ed-3 
+(https://standards.iso.org/iso-iec/21122/-4/ed-3/en/). The idea is tested if the image is
+a product (possibly processed) of decomposition operation applied to the Sintel image like that in 13.jxs.
+

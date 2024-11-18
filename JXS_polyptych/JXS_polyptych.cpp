@@ -28,7 +28,7 @@ int main()
     xs_image_t image{};
     ids_t ids{};
 
-    // create a source 24-bit RGB image (8 bit depth)
+    // create a source RGB image (8 bit depth) form PNG file
     // and a corresponding ids structure of 
     // which only ncomps, w, h, sd and nlvy fields
     // are required in this exercise 
