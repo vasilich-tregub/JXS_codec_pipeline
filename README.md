@@ -47,8 +47,15 @@ the tetraptych (or, in general, polyptich), sort of "Four Seasons" or "Morning, 
 or something else. Most often, however, decomposition images resemble Piet Mondrian's 
 figurative paintings if any art at all.
 
-The project JXS\_decode\_rearrange is an attempt to understand the purpose of including image files
+<!-- The project JXS\_decode\_rearrange is an attempt to understand the purpose of including image files
 like 44.jxs with the archive part-4-refstreams.zip of ISO-IEC 21122 -4 ed-3 
 (https://standards.iso.org/iso-iec/21122/-4/ed-3/en/). The idea is tested if the image is
-a product (possibly processed) of decomposition operation applied to the Sintel image like that in 13.jxs.
+a product (possibly processed) of decomposition operation applied to the Sintel image like that in 13.jxs. -->
 
+The project JXS\_encode\_decode introduces encoding as such into consideration. It is 
+a beneficial learning experience to repeatedly run this snippet, each time (reasonably) 
+changing hard coded parameters and analysing log printouts.
+
+More efficiently, you can use this snippet with the xs_ref_sw_ed2 reference software 
+library itself 
+(https://standards.iso.org/iso-iec/21122/-5/ed-2/en/ISO_IEC_21122-5_2_Ed-2.zip).
