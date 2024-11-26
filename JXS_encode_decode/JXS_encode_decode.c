@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 		const uint32_t width = 80;
 		const uint32_t height = 1;
 		const uint32_t depth = 8;
-		const uint32_t bpp = 8;
+		const uint32_t bpp = 16;
 		xs_config.verbose = 0; // options.verbose;
 
 		image.width = width;
@@ -78,8 +78,11 @@ int main(int argc, char** argv)
 		uint32_t* ptr0 = image.comps_array[0];
 		for (int iy = 0; iy < height; ++iy) {
 			for (int ix = 0; ix < width; ++ix) {
-				ptr0[iy * width + ix] = 256 - 16 * (ix / 5);   // Y
+				int halfw = width / 2;
+				ptr0[iy * width + ix] = 128 - (0.25 * ((ix - halfw) * (ix - halfw) * (ix - halfw) / 125.));   // Y
+				printf("%d ", ptr0[iy * width + ix]);
 			}
+			printf("\n");
 			/*for (int ix = 0; ix < width / 4; ++ix) {
 				ptr0[iy * width + ix] = 0;   // Y
 			}
