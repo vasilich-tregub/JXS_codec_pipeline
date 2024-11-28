@@ -59,10 +59,12 @@ int main(int argc, char** argv)
 	do
 	{
 		const uint32_t width = 80;
-		const uint32_t height = 1;
-		const uint32_t depth = 8;
-		const uint32_t bpp = 16;
+		const uint32_t height = 1; // with 4 rows the codec tolerates bpp as low as 3, with bpp=4 the decoded picture looks similar to source
+		const uint32_t depth = 12;
+		const uint32_t bpp = 12;    // with height = 4, bpp = 5, the quality can be called 'visually lossless'
 		xs_config.verbose = 0; // options.verbose;
+		
+		uint32_t* cpim = (uint32_t *)malloc(4 * width * height);
 
 		image.width = width;
 		image.height = height;
@@ -78,9 +80,10 @@ int main(int argc, char** argv)
 		uint32_t* ptr0 = image.comps_array[0];
 		for (int iy = 0; iy < height; ++iy) {
 			for (int ix = 0; ix < width; ++ix) {
-				int halfw = width / 2;
-				ptr0[iy * width + ix] = 128 - (0.25 * ((ix - halfw) * (ix - halfw) * (ix - halfw) / 125.));   // Y
-				printf("%d ", ptr0[iy * width + ix]);
+				int halfw = (width - 1) / 2;
+				ptr0[iy * width + ix] = 16 * 128 - (16 * 0.25 * ((ix - halfw) * (ix - halfw) * (ix - halfw) / 125.));   // Y
+				cpim[iy * width + ix] = ptr0[iy * width + ix];
+				printf("%4d ", ptr0[iy * width + ix]);
 			}
 			printf("\n");
 			/*for (int ix = 0; ix < width / 4; ++ix) {
@@ -196,12 +199,13 @@ int main(int argc, char** argv)
 			}
 			int32_t* ptr = image.comps_array[0];
 			for (int iy = 0; iy < height; ++iy) {
+				printf("Approx \n");
 				for (int ix = 0; ix < width / 2; ++ix) {
-					printf("%d ", ptr[iy * width + 2 * ix] >> 12);
+					printf("%4d ", ptr[iy * width + 2 * ix] >> 12);
 				}
-				printf("\n");
+				printf("\nCoeffs (*16, (>>12 - >>8 =  <<4) \n");
 				for (int ix = 0; ix < width / 2; ++ix) {
-					printf("%d ", ptr[iy * width + 2 * ix + 1] >> 12);
+					printf("%4d ", ptr[iy * width + 2 * ix + 1] >> 8);
 				}
 				printf("\n");
 			}
@@ -219,9 +223,10 @@ int main(int argc, char** argv)
 				ret = -1;
 				break;
 			}
+			printf("Source - decoded:\n");
 			for (int iy = 0; iy < height; ++iy) {
 				for (int ix = 0; ix < width; ++ix) {
-					printf("%d ", ptr[iy * width + ix]);
+					printf("%4d ", cpim[iy * width + ix] - ptr[iy * width + ix]);
 				}
 				printf("\n");
 			}
