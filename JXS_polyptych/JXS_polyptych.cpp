@@ -120,14 +120,17 @@ int main()
 
     // DWT forward
     dwt_forward_transform(&ids, &image);
+    std::vector<int32_t> im0(&(image.comps_array[0][0]), &(image.comps_array[0][image.width * image.height]));
+    std::vector<int32_t> im1(&(image.comps_array[1][0]), &(image.comps_array[1][image.width * image.height]));
+    std::vector<int32_t> im2(&(image.comps_array[2][0]), &(image.comps_array[2][image.width * image.height]));
     // create an illustration of DWT-transformed image by truncation of int32_t component values into bytes
     for (int i = 0; i < image.width * image.height; ++i)
     {
         int rs = 1 << 12; // right shift, 12 bit positions
         buf[i] =
-            (uint8_t)(image.comps_array[0][i] / rs) * 256 * 256 + // red
-            (uint8_t)(image.comps_array[1][i] / rs) * 256 + // green
-            (uint8_t)(image.comps_array[2][i] / rs); // blue
+            (uint8_t)(image.comps_array[0][i] / rs + 128) * 256 * 256 + // red
+            (uint8_t)(image.comps_array[1][i] / rs + 128) * 256 + // green
+            (uint8_t)(image.comps_array[2][i] / rs + 128); // blue
     }
     // and save this picture to image file. Notice that DWT of JPEGXS codec creates an INTERLEAVED tranform:
     // you would not readily discern the bands in the picture
@@ -153,21 +156,21 @@ int main()
                 int iHL = (iy + dheight / d) * stride + ix;
                 int iHH = (iy + dheight / d) * stride + ix + dwidth / d;
                 buf[iLL] = // Approximation coeffs
-                    (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
-                    (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
-                    (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                    (uint8_t)(image.comps_array[0][iCC] / rs + 128) * 256 * 256 + // red // + 128: account for approx sign for display
+                    (uint8_t)(image.comps_array[1][iCC] / rs + 128) * 256 + // green // + 128: account for approx sign for display
+                    (uint8_t)(image.comps_array[2][iCC] / rs + 128); // blue // + 128: account for approx sign for display
                 buf[iLH] = // horizontal detail coeffs
-                    (uint8_t)(image.comps_array[0][iCC + d] / rs) * 256 * 256 + // red
-                    (uint8_t)(image.comps_array[1][iCC + d] / rs) * 256 + // green
-                    (uint8_t)(image.comps_array[2][iCC + d] / rs); // blue
+                    (uint8_t)(16 * image.comps_array[0][iCC + d] / rs + 128) * 256 * 256 + // red // *16: enhance details brightness
+                    (uint8_t)(16 * image.comps_array[1][iCC + d] / rs + 128) * 256 + // green // *16: enhance details brightness
+                    (uint8_t)(16 * image.comps_array[2][iCC + d] / rs + 128); // blue // *16: enhance details brightness
                 buf[iHL] = // vertical detail coeffs
-                    (uint8_t)(image.comps_array[0][iCC + stride * d] / rs) * 256 * 256 + // red
-                    (uint8_t)(image.comps_array[1][iCC + stride * d] / rs) * 256 + // green
-                    (uint8_t)(image.comps_array[2][iCC + stride * d] / rs); // blue
+                    (uint8_t)(16 * image.comps_array[0][iCC + stride * d] / rs + 128) * 256 * 256 + // red // *16: enhance details brightness
+                    (uint8_t)(16 * image.comps_array[1][iCC + stride * d] / rs + 128) * 256 + // green // *16: enhance details brightness
+                    (uint8_t)(16 * image.comps_array[2][iCC + stride * d] / rs + 128); // blue // *16: enhance details brightness
                 buf[iHH] = // diagonal detail coeffs
-                    (uint8_t)(image.comps_array[0][iCC + stride * d + d] / rs) * 256 * 256 + // red
-                    (uint8_t)(image.comps_array[1][iCC + stride * d + d] / rs) * 256 + // green
-                    (uint8_t)(image.comps_array[2][iCC + stride * d + d] / rs); // blue
+                    (uint8_t)(16 * image.comps_array[0][iCC + stride * d + d] / rs + 128) * 256 * 256 + // red // *16: enhance details brightness
+                    (uint8_t)(16 * image.comps_array[1][iCC + stride * d + d] / rs + 128) * 256 + // green // *16: enhance details brightness
+                    (uint8_t)(16 * image.comps_array[2][iCC + stride * d + d] / rs + 128); // blue // *16: enhance details brightness
             }
         }
     }
@@ -186,13 +189,13 @@ int main()
                     int iLL = iy * stride + ix;
                     int iLH = iy * stride + ix + dwidth / d;
                     buf[iLL] = // Approximation coeffs
-                        (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
-                        (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
-                        (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                        (uint8_t)(image.comps_array[0][iCC] / rs + 128) * 256 * 256 + // red
+                        (uint8_t)(image.comps_array[1][iCC] / rs + 128) * 256 + // green
+                        (uint8_t)(image.comps_array[2][iCC] / rs + 128); // blue
                     buf[iLH] = // horizontal detail coeffs
-                        (uint8_t)(image.comps_array[0][iCC + d] / rs) * 256 * 256 + // red
-                        (uint8_t)(image.comps_array[1][iCC + d] / rs) * 256 + // green
-                        (uint8_t)(image.comps_array[2][iCC + d] / rs); // blue
+                        (uint8_t)(16 * image.comps_array[0][iCC + d] / rs + 128) * 256 * 256 + // red
+                        (uint8_t)(16 * image.comps_array[1][iCC + d] / rs + 128) * 256 + // green
+                        (uint8_t)(16 * image.comps_array[2][iCC + d] / rs + 128); // blue
                 }
             }
         }
@@ -207,13 +210,13 @@ int main()
                     int iLL = iy * stride + ix;
                     int iLH = iy * stride + ix + dwidth / d;
                     buf[iLL] = // Approximation coeffs
-                        (uint8_t)(image.comps_array[0][iCC] / rs) * 256 * 256 + // red
-                        (uint8_t)(image.comps_array[1][iCC] / rs) * 256 + // green
-                        (uint8_t)(image.comps_array[2][iCC] / rs); // blue
+                        (uint8_t)(image.comps_array[0][iCC] / rs + 128) * 256 * 256 + // red
+                        (uint8_t)(image.comps_array[1][iCC] / rs + 128) * 256 + // green
+                        (uint8_t)(image.comps_array[2][iCC] / rs + 128); // blue
                     buf[iLH] = // horizontal detail coeffs
-                        (uint8_t)(image.comps_array[0][iCC + d] / rs) * 256 * 256 + // red
-                        (uint8_t)(image.comps_array[1][iCC + d] / rs) * 256 + // green
-                        (uint8_t)(image.comps_array[2][iCC + d] / rs); // blue
+                        (uint8_t)(16 * image.comps_array[0][iCC + d] / rs + 128) * 256 * 256 + // red
+                        (uint8_t)(16 * image.comps_array[1][iCC + d] / rs + 128) * 256 + // green
+                        (uint8_t)(16 * image.comps_array[2][iCC + d] / rs + 128); // blue
                 }
             }
         }
