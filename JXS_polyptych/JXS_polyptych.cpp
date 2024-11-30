@@ -3,7 +3,7 @@
 
 extern "C" {
 #include "dwt.h"
-#include "ids.h"
+//#include "ids.h"
 #include <stdio.h>
 #include <malloc.h>
 }
@@ -226,10 +226,10 @@ int main()
     dwt_inverse_transform(&ids, &image);
 
     // inverse reversible color transform (from mct-aware encoded) for light444.12 profile with XS_CPIH_RCT marker
-    /*c0 = image.comps_array[0];
+    c0 = image.comps_array[0];
     c1 = image.comps_array[1];
     c2 = image.comps_array[2];
-    for (int i = 0; i < len; ++i)
+    /*for (int i = 0; i < len; ++i)
     {
         const xs_data_in_t tmp = *c0 - ((*c1 + *c2) >> 2);
         *c0 = tmp + *c2;

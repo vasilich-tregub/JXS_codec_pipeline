@@ -16,6 +16,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_polyptych", "JXS_polypt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_encode_decode", "JXS_encode_decode\JXS_encode_decode.vcxproj", "{32E27776-7024-47E3-8F94-D8434F6B907A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeGall53_decomposition", "LeGall53_decomposition\LeGall53_decomposition.vcxproj", "{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CDF97_decomposition", "CDF97_decomposition\CDF97_decomposition.vcxproj", "{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -56,6 +60,22 @@ Global
 		{32E27776-7024-47E3-8F94-D8434F6B907A}.Release|x64.Build.0 = Release|x64
 		{32E27776-7024-47E3-8F94-D8434F6B907A}.Release|x86.ActiveCfg = Release|Win32
 		{32E27776-7024-47E3-8F94-D8434F6B907A}.Release|x86.Build.0 = Release|Win32
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Debug|x64.ActiveCfg = Debug|x64
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Debug|x64.Build.0 = Debug|x64
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Debug|x86.ActiveCfg = Debug|Win32
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Debug|x86.Build.0 = Debug|Win32
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Release|x64.ActiveCfg = Release|x64
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Release|x64.Build.0 = Release|x64
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Release|x86.ActiveCfg = Release|Win32
+		{375BA692-4BEF-4E61-9E94-19F8AEFC22FD}.Release|x86.Build.0 = Release|Win32
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Debug|x64.ActiveCfg = Debug|x64
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Debug|x64.Build.0 = Debug|x64
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Debug|x86.ActiveCfg = Debug|Win32
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Debug|x86.Build.0 = Debug|Win32
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Release|x64.ActiveCfg = Release|x64
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Release|x64.Build.0 = Release|x64
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Release|x86.ActiveCfg = Release|Win32
+		{3DA238F7-150A-4CF2-B6A4-ADE021CF18DC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
