@@ -108,7 +108,18 @@ void dwt_forward_transform(std::vector<int32_t>& im, int width, int height, cons
 	}
 }
 
-void dwt_inverse_transform()
+void dwt_inverse_transform(std::vector<int32_t>& im, int width, int height, const int h_level, const int v_level)
 {
-
+	assert(im.size() == width * height);
+	assert(v_level <= h_level);
+	int d = v_level - 1;
+	for (; d >= h_level; --d)
+	{
+		dwt_transform_horizontal(im, width, height, d, d, dwt_inverse_filter);
+	}
+	for (; d >= 0; --d)
+	{
+		dwt_transform_horizontal(im, width, height, d, d, dwt_inverse_filter);
+		dwt_transform_vertical(im, width, height, d, d, dwt_inverse_filter);
+	}
 }
