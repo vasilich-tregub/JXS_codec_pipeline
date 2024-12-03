@@ -19,8 +19,8 @@ int main()
     im.depth = -1;
     im.comps_array[2] = im.comps_array[1] = im.comps_array[0] = NULL;
     ppm_decode("../19.jxs.ppm", &im);
-    int h_level = 2;
-    int v_level = 2;
+    int h_level = 1;
+    int v_level = 1;
 
     std::vector<int32_t> im0(&(im.comps_array[0][0]), &(im.comps_array[0][im.width * im.height]));
     std::vector<int32_t> im1(&(im.comps_array[1][0]), &(im.comps_array[1][im.width * im.height]));
@@ -31,9 +31,9 @@ int main()
     const int32_t dclev = ((1 << Bw) >> 1); // DC level
     for (int i = 0; i < im.width * im.height; ++i)
     {
-        im0[i] = im0[i] << s;
-        im1[i] = im1[i] << s;
-        im2[i] = im2[i] << s;
+        im0[i] = im0[i] << s - dclev;
+        im1[i] = im1[i] << s - dclev;
+        im2[i] = im2[i] << s - dclev;
     }
     dwt_forward_transform(im0, im.width, im.height, h_level, v_level);
     dwt_forward_transform(im1, im.width, im.height, h_level, v_level);
@@ -141,11 +141,12 @@ int main()
     dwt_inverse_transform(im0, im.width, im.height, h_level, v_level);
     dwt_inverse_transform(im1, im.width, im.height, h_level, v_level);
     dwt_inverse_transform(im2, im.width, im.height, h_level, v_level);
+    const int32_t dclev_and_rounding = ((1 << Bw) >> 1) + ((1 << s) >> 1);
     for (int i = 0; i < im.width * im.height; ++i)
     {
-        im0[i] = im0[i] >> s;
-        im1[i] = im1[i] >> s;
-        im2[i] = im2[i] >> s;
+        im0[i] = im0[i] >> s + dclev_and_rounding;
+        im1[i] = im1[i] >> s + dclev_and_rounding;
+        im2[i] = im2[i] >> s + dclev_and_rounding;
     }
     // save recovered image to file
     for (int i = 0; i < im.width * im.height; ++i)
