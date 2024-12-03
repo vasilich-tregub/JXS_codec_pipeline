@@ -131,6 +131,7 @@
     <ClCompile Include="CDF97_decomposition.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CDF97dwt.h" />
     <ClInclude Include="image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
