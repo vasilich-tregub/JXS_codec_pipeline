@@ -144,8 +144,8 @@ void dwt_inverse_transform(std::vector<double>& im, int width, int height, const
 {
 	assert(im.size() == width * height);
 	assert(v_level <= h_level);
-	int d = v_level - 1;
-	for (; d >= h_level; --d)
+	int d = h_level - 1;
+	for (; d >= v_level; --d)
 	{
 		dwt_transform_horizontal(im, width, height, d, d, dwt_inverse_filter);
 	}

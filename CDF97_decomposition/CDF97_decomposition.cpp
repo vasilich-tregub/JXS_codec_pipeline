@@ -68,17 +68,17 @@ int main()
                     (uint8_t)(im1[iCC] / rs) * 256 + // green
                     (uint8_t)(im0[iCC] / rs); // blue
                 buf[iLH] = // horizontal detail coeffs
-                    (uint8_t)(16 * im2[iCC + d] / rs) * 256 * 256 + // red // *16: enhance details brightness
-                    (uint8_t)(16 * im1[iCC + d] / rs) * 256 + // green // *16: enhance details brightness
-                    (uint8_t)(16 * im0[iCC + d] / rs); // blue // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im2[iCC + d]) / rs) * 256 * 256 + // red // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im1[iCC + d]) / rs) * 256 + // green // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im0[iCC + d]) / rs); // blue // *16: enhance details brightness
                 buf[iHL] = // vertical detail coeffs
-                    (uint8_t)(16 * im2[iCC + stride * d] / rs) * 256 * 256 + // red // *16: enhance details brightness
-                    (uint8_t)(16 * im1[iCC + stride * d] / rs) * 256 + // green // *16: enhance details brightness
-                    (uint8_t)(16 * im0[iCC + stride * d] / rs); // blue // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im2[iCC + stride * d]) / rs) * 256 * 256 + // red // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im1[iCC + stride * d]) / rs) * 256 + // green // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im0[iCC + stride * d]) / rs); // blue // *16: enhance details brightness
                 buf[iHH] = // diagonal detail coeffs
-                    (uint8_t)(16 * im2[iCC + stride * d + d] / rs) * 256 * 256 + // red // *16: enhance details brightness
-                    (uint8_t)(16 * im1[iCC + stride * d + d] / rs) * 256 + // green // *16: enhance details brightness
-                    (uint8_t)(16 * im0[iCC + stride * d + d] / rs); // blue // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im2[iCC + stride * d + d]) / rs) * 256 * 256 + // red // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im1[iCC + stride * d + d]) / rs) * 256 + // green // *16: enhance details brightness
+                    (uint8_t)(16 * abs(im0[iCC + stride * d + d]) / rs); // blue // *16: enhance details brightness
             }
         }
     }
@@ -101,9 +101,9 @@ int main()
                         (uint8_t)(im1[iCC] / rs) * 256 + // green
                         (uint8_t)(im0[iCC] / rs); // blue
                     buf[iLH] = // horizontal detail coeffs
-                        (uint8_t)(16 * im2[iCC + d] / rs) * 256 * 256 + // red
-                        (uint8_t)(16 * im1[iCC + d] / rs) * 256 + // green
-                        (uint8_t)(16 * im0[iCC + d] / rs); // blue
+                        (uint8_t)(16 * abs(im2[iCC + d]) / rs) * 256 * 256 + // red
+                        (uint8_t)(16 * abs(im1[iCC + d]) / rs) * 256 + // green
+                        (uint8_t)(16 * abs(im0[iCC + d]) / rs); // blue
                 }
             }
         }
@@ -122,9 +122,9 @@ int main()
                         (uint8_t)(im1[iCC] / rs) * 256 + // green
                         (uint8_t)(im0[iCC] / rs); // blue
                     buf[iLH] = // horizontal detail coeffs
-                        (uint8_t)(16 * im2[iCC + d] / rs) * 256 * 256 + // red
-                        (uint8_t)(16 * im1[iCC + d] / rs) * 256 + // green
-                        (uint8_t)(16 * im0[iCC + d] / rs); // blue
+                        (uint8_t)(16 * abs(im2[iCC + d]) / rs) * 256 * 256 + // red
+                        (uint8_t)(16 * abs(im1[iCC + d]) / rs) * 256 + // green
+                        (uint8_t)(16 * abs(im0[iCC + d]) / rs); // blue
                 }
             }
         }
