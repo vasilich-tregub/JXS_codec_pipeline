@@ -11,11 +11,11 @@ void dwt_inverse_filter(std::vector<double>& im, const int current, const int in
 	int i;
 
 	// Undo scale
-	a = 1.149604398;
+	/*a = 1.149604398;
 	for (i = current; i < end; i += inc) {
 		if (i % (2 * inc)) im[i] *= a;
 		else im[i] /= a;
-	}
+	}*/
 
 	// Undo update 2
 	a = -0.4435068522;
@@ -95,11 +95,11 @@ void dwt_forward_filter(std::vector<double>& im, const int current, const int in
 		im[i] += 2 * a * im[i - inc];
 
 	// Scale
-	a = 1 / 1.149604398;
+	/*a = 1 / 1.149604398;
 	for (i = current; i < end; i += inc) {
 		if (i % (2 * inc)) im[i] *= a;
 		else im[i] /= a;
-	}
+	}*/
 }
 
 void dwt_transform_vertical(std::vector<double>& im, int width, int height, const int h_level, const int v_level, filter_func_t filter)
