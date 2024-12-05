@@ -37,7 +37,7 @@ int main()
     std::vector<uint32_t> buf(im.width * im.height);
     for (int i = 0; i < im.width * im.height; ++i)
     {
-        int rs = (1 << (im.depth - 8)); // right shift, bitdepth - 8 bit positions
+        int rs = (1 << (im.depth - 7)); // right shift, bitdepth - 8 bit positions + 1
         buf[i] =
             (uint8_t)(im2[i] / rs) * 256 * 256 + // red
             (uint8_t)(im1[i] / rs) * 256 + // green
@@ -47,7 +47,7 @@ int main()
         printf("cannot write image file 'decomposition_after_inline_DWT.png'\n");
     // de-interleave coefficients for test imaging into a buffer 'buf' without altering image 'im':     
     int stride = im.width;
-    int rs = 1 << (im.depth - 8); // right shift, bitdepth positions - 1
+    int rs = 1 << (im.depth - 7); // right shift, bitdepth positions - 8 + 1
     int dwidth = im.width / 2;
     int dheight = im.height / 2;
     for (int lvl = 1; lvl <= v_level; ++lvl)
