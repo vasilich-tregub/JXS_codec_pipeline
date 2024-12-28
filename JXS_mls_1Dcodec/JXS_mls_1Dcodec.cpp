@@ -7,20 +7,21 @@
 
 int main()
 {
-	uint8_t NLx = 1; // Number of levels in x (decomp_h)
+	uint8_t NLx = 3; // Number of levels in x (decomp_h)
 	if (NLx > 5)
 	{
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
 		return -1;
 	}
-	uint32_t width = 160;
+	uint32_t width = 640;
 	std::vector<int32_t> im(width);    // im is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
 	for (int ix = 0; ix < width; ++ix) {
-		im[ix] = 256 - 8 * (ix / 5);   // Y
+		im[ix] = 256 - 2 * (ix / 5);   // Y
 	}
-
+	int32_t depth = 8;
+	int32_t dclev = ((1 << depth) >> 1);
 	for (int i = 0; i < width; ++i)
-		im[i] *= 256 * 16;
+		im[i] = (im[i] - dclev);
 
 	std::cout << "Forward\n";
 	for (int i = 0; i < NLx; ++i)
@@ -37,18 +38,24 @@ int main()
 	}                                            // the last array has the earliest details, array of size of half source data length
 	precinct_bufs[0].resize(bufsize);    // precinct->sig_mag_data_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
 
-	/*int d = 1 << NLx;
+	int d = 1;
+	for (int lvl = 1; lvl <= NLx; ++lvl)
+	{
+		d = 1 << lvl;
+		for (int ix = 0; ix < width / d; ++ix)
+		{
+			precinct_bufs[NLx + 1 - lvl][ix] = im[d * ix + (1 << (lvl - 1))]; // horizontal detail coeffs
+		}
+	}
 	for (int ix = 0; ix < width / d; ++ix)
 	{
-		for (int lvl = 1; lvl <= NLx; ++lvl)
-		{
-			precinct_bufs[lvl][ix] = im[d * ix + (1 << (lvl - 1))]; // horizontal detail coeffs
-		}
-	}*/
+		precinct_bufs[0][ix] = im[d * ix]; // approximation coeffs
+	}
+
 	for (int i = 0; i < width; ++i)
 	{
 
-		std::cout << im[i] / 256 / 16 << " ";
+		std::cout << im[i] << " ";
 	}
 	std::cout << "\n";
 
@@ -58,7 +65,7 @@ int main()
 		dwt_inverse(im, i);
 	}
 	for (int i = 0; i < width; ++i)
-		std::cout << im[i] / 256 / 16 << " ";
+		std::cout << im[i] << " ";
 	std::cout << "\n";
 
 	/*std::vector<double> decomp(width);
