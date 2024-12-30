@@ -13,7 +13,7 @@ static unsigned int __inline BSR(unsigned long x)
 	return r;
 }
 #define GCLI(x) (((x) == 0) ? 0 : (BSR((x)) + 1))
-#define SIGN_BIT_MASK (1 << 31)
+#define SIGN_BIT_MASK (1 << (8 * sizeof(int32_t) - 1))
 
 int32_t clamp(int32_t v, int32_t max_v)
 {
@@ -91,7 +91,7 @@ int main()
 	for (int lvl = 1; lvl <= NLx; ++lvl)
 	{
 		int32_t or_all, j, k, i, j_last;
-		for (i = 0, k = 0; i < (precinct_sig_mag_data_bufs[lvl].size() / 4) * group_size; i += group_size, ++k)
+		for (i = 0, k = 0; i < (precinct_sig_mag_data_bufs[lvl].size() / group_size) * group_size; i += group_size, ++k)
 		{
 			for (or_all = 0, j = 0; j < group_size; j++)
 				or_all |= precinct_sig_mag_data_bufs[lvl][j];
