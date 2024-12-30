@@ -5,6 +5,16 @@
 #include <vector>
 #include "LGT.h"
 
+#include <intrin.h>
+static unsigned int __inline BSR(unsigned long x)
+{
+	unsigned long r = 0;
+	_BitScanReverse(&r, x);
+	return r;
+}
+#define GCLI(x) (((x) == 0) ? 0 : (BSR((x)) + 1))
+#define SIGN_BIT_MASK (1 << 31)
+
 int32_t clamp(int32_t v, int32_t max_v)
 {
 	if (v > max_v)
@@ -26,10 +36,10 @@ int main()
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
 		return -1;
 	}
-	uint32_t width = 640;
+	uint32_t width = 80;
 	std::vector<int32_t> im(width);    // im is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
 	for (int ix = 0; ix < width; ++ix) {
-		im[ix] = 256 - 2 * (ix / 5);   // Y
+		im[ix] = 256 - 16 * (ix / 5);   // Y
 	}
 	int32_t depth = 8;
 	int32_t dclev = ((1 << depth) >> 1);
@@ -42,36 +52,57 @@ int main()
 		dwt_forward(im, i);
 	}
 
-	std::vector<std::vector<int32_t>> precinct_bufs(NLx + 1);
+	int group_size = 4;
+	std::vector<std::vector<int32_t>> precinct_sig_mag_data_bufs(NLx + 1);// Mimics ref codec's prec sig_mag_data buffer, where level indices are in reverse
+	std::vector<std::vector<int8_t>> precinct_gclis_bufs(NLx + 1);// Mimics ref codec's prec gclis buffer, where level indices are in reverse
 	size_t bufsize = width;
 	for (int i = NLx; i > 0; --i)
 	{
 		bufsize /= 2;
-		precinct_bufs[i].resize(bufsize);// Mimics ref codec prec buffers, where level indices are in reverse:
+		precinct_gclis_bufs[i].resize((bufsize + group_size - 1) / group_size);
+		precinct_sig_mag_data_bufs[i].resize((bufsize + group_size - 1) / group_size * group_size);
 	}                                            // the last array has the earliest details, array of size of half source data length
-	precinct_bufs[0].resize(bufsize);    // precinct->sig_mag_data_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
+	precinct_sig_mag_data_bufs[0].resize((bufsize + group_size) / group_size * group_size); // precinct->sig_mag_data_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
+	precinct_gclis_bufs[0].resize((bufsize + group_size) / group_size);    // precinct->gclis_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
 
-	int d = 1; // isolate value sign into msb
+	int d = 1; // fill precinct_sig_mag_data_bufs[NLx + 1 - lvl] and isolate value sign into msb
 	for (int lvl = 1; lvl <= NLx; ++lvl)
 	{
 		d = 1 << lvl;
-		for (int ix = 0; ix < width / d; ++ix)
+		for (int idst = 0, iximg = 0; iximg < width - (1 << (lvl - 1)); iximg += d, ++idst)
 		{
-			int32_t val = im[d * ix + (1 << (lvl - 1))]; // horizontal detail coeff
+			int32_t val = im[iximg + (1 << (lvl - 1))]; // horizontal detail coeff
 			if (val >= 0)
-				precinct_bufs[NLx + 1 - lvl][ix] = val;
+				precinct_sig_mag_data_bufs[NLx + 1 - lvl][idst] = val;
 			else
-				precinct_bufs[NLx + 1 - lvl][ix] = -val + (1 << 31)/*SIGN_BIT_MASK*/;
+				precinct_sig_mag_data_bufs[NLx + 1 - lvl][idst] = -val + SIGN_BIT_MASK;
 
 		}
 	}
-	for (int ix = 0; ix < width / d; ++ix)
+	for (int idst = 0, iximg = 0; iximg < width; ++idst, iximg += d)
 	{
-		int32_t val = im[d * ix]; // approximation coeff
+		int32_t val = im[iximg]; // approximation coeff
 		if (val >= 0)
-			precinct_bufs[0][ix] = val;
+			precinct_sig_mag_data_bufs[0][idst] = val;
 		else
-			precinct_bufs[0][ix] = -val + (1 << 31)/*SIGN_BIT_MASK*/;
+			precinct_sig_mag_data_bufs[0][idst] = -val + SIGN_BIT_MASK;
+	}
+
+	for (int lvl = 1; lvl <= NLx; ++lvl)
+	{
+		int32_t or_all, j, k, i, j_last;
+		for (i = 0, k = 0; i < (precinct_sig_mag_data_bufs[lvl].size() / 4) * group_size; i += group_size, ++k)
+		{
+			for (or_all = 0, j = 0; j < group_size; j++)
+				or_all |= precinct_sig_mag_data_bufs[lvl][j];
+			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
+		}
+		if (precinct_sig_mag_data_bufs[lvl].size() % group_size) // incomplete group of coeffs
+		{
+			for (or_all = 0, j_last = 0; j_last < precinct_sig_mag_data_bufs[lvl].size() % group_size; j_last++, j++)
+				or_all |= precinct_sig_mag_data_bufs[lvl][j];
+			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
+		}
 	}
 
 	for (int i = 0; i < width; ++i)
