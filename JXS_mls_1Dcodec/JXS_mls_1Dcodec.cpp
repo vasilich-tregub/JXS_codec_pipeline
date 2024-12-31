@@ -116,6 +116,8 @@ int main()
 	}
 	// end of precinct from image
 
+	// planned: rate control; quantization; dequantization etc. to be added here 
+
 	std::vector<int32_t> dcdimg(width);    // dcdimg, decoded image
 
 	// precinct to image
