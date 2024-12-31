@@ -37,20 +37,27 @@ int main()
 		return -1;
 	}
 	uint32_t width = 80;
-	std::vector<int32_t> im(width);    // im is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
+	std::vector<int32_t> img2enc(width);    // img2enc is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
 	for (int ix = 0; ix < width; ++ix) {
-		im[ix] = 256 - 16 * (ix / 5);   // Y
+		img2enc[ix] = 256 - 16 * (ix / 5);   // Y
 	}
 	int32_t depth = 8;
 	int32_t dclev = ((1 << depth) >> 1);
 	for (int i = 0; i < width; ++i)
-		im[i] = (im[i] - dclev);
+		img2enc[i] = (img2enc[i] - dclev);
 
 	std::cout << "Forward\n";
 	for (int i = 0; i < NLx; ++i)
 	{
-		dwt_forward(im, i);
+		dwt_forward(img2enc, i);
 	}
+
+	std::cout << "img2enc after NLx runs of dwt_forward(img2enc, lvl)\n";
+	for (int i = 0; i < width; ++i)
+	{
+		std::cout << img2enc[i] << " ";
+	}
+	std::cout << "\n";
 
 	int group_size = 4;
 	std::vector<std::vector<int32_t>> precinct_sig_mag_data_bufs(NLx + 1);// Mimics ref codec's prec sig_mag_data buffer, where level indices are in reverse
@@ -65,23 +72,26 @@ int main()
 	precinct_sig_mag_data_bufs[0].resize((bufsize + group_size) / group_size * group_size); // precinct->sig_mag_data_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
 	precinct_gclis_bufs[0].resize((bufsize + group_size) / group_size);    // precinct->gclis_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
 
+	// precinct from image
+	std::cout << "Precinct from image; images not altered\n";
 	int d = 1; // fill precinct_sig_mag_data_bufs[NLx + 1 - lvl] and isolate value sign into msb
 	for (int lvl = 1; lvl <= NLx; ++lvl)
 	{
 		d = 1 << lvl;
 		for (int idst = 0, iximg = 0; iximg < width - (1 << (lvl - 1)); iximg += d, ++idst)
 		{
-			int32_t val = im[iximg + (1 << (lvl - 1))]; // horizontal detail coeff
+			int band_idx = NLx + 1 - lvl;
+			int32_t val = img2enc[iximg + (1 << (lvl - 1))]; // horizontal detail coeff
 			if (val >= 0)
-				precinct_sig_mag_data_bufs[NLx + 1 - lvl][idst] = val;
+				precinct_sig_mag_data_bufs[band_idx][idst] = val;
 			else
-				precinct_sig_mag_data_bufs[NLx + 1 - lvl][idst] = -val + SIGN_BIT_MASK;
+				precinct_sig_mag_data_bufs[band_idx][idst] = -val + SIGN_BIT_MASK;
 
 		}
 	}
 	for (int idst = 0, iximg = 0; iximg < width; ++idst, iximg += d)
 	{
-		int32_t val = im[iximg]; // approximation coeff
+		int32_t val = img2enc[iximg]; // approximation coeff
 		if (val >= 0)
 			precinct_sig_mag_data_bufs[0][idst] = val;
 		else
@@ -104,27 +114,44 @@ int main()
 			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
 		}
 	}
+	// end of precinct from image
 
-	for (int i = 0; i < width; ++i)
+	std::vector<int32_t> dcdimg(width);    // dcdimg, decoded image
+
+	// precinct to image
+	for (int lvl = 1; lvl <= NLx; ++lvl)
 	{
-		std::cout << im[i] << " ";
+		d = 1 << lvl;
+		int band_idx = NLx + 1 - lvl;
+		for (size_t idst = 0, isrc = 0; idst < width - (1 << (lvl - 1)); idst += d, ++isrc)
+		{
+			int32_t val = precinct_sig_mag_data_bufs[band_idx][isrc];
+			dcdimg[idst + (1 << (lvl - 1))] = ((val & SIGN_BIT_MASK) ? -(val & ~SIGN_BIT_MASK) : val);
+		}
 	}
+	for (int idst = 0, isrc = 0; idst < width; ++isrc, idst += d)
+	{
+		int32_t val = precinct_sig_mag_data_bufs[0][isrc];
+		dcdimg[idst] = ((val & SIGN_BIT_MASK) ? -(val & ~SIGN_BIT_MASK) : val);
+	}
+	std::cout << "Precinct to image, 'dcdimg' printout\n";
+	for (int i = 0; i < width; ++i)
+		std::cout << dcdimg[i] << " ";
 	std::cout << "\n";
-
 	std::cout << "Inverse\n";
 	for (int i = NLx - 1; i >= 0; --i)
 	{
-		dwt_inverse(im, i);
+		dwt_inverse(dcdimg, i);
 	}
-	/*	const uint8_t s = Bw - (uint8_t)im->depth;
+	/*	const uint8_t s = Bw - (uint8_t)img2enc->depth;
 	const xs_data_in_t dclev_and_rounding = ((1 << Bw) >> 1) + ((1 << s) >> 1);
 	Bw = depth as Fq (fractional bits) is zero in this exercise*/
 	int32_t dclev_and_rounding = ((1 << depth) >> 1);
 	int32_t max_val = (1 << depth) - 1;
 	for (int i = 0; i < width; ++i)
-		im[i] = clamp((im[i] + dclev_and_rounding), max_val);
+		dcdimg[i] = clamp((dcdimg[i] + dclev_and_rounding), max_val);
 	for (int i = 0; i < width; ++i)
-		std::cout << im[i] << " ";
+		std::cout << dcdimg[i] << " ";
 	std::cout << "\n";
 
 	/*std::vector<double> decomp(width);
@@ -132,8 +159,8 @@ int main()
 	{
 		for (int i = 0; i < width / 2 / d; ++i)
 		{
-			decomp[i] = im[d * i];
-			decomp[i + width / 2 / d] = im[2 * d * i + d];
+			decomp[i] = img2enc[d * i];
+			decomp[i + width / 2 / d] = img2enc[2 * d * i + d];
 		}
 	}
 	std::cout << "Deinterleaved vector:\n";
