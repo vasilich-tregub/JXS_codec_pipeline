@@ -30,7 +30,7 @@ int32_t clamp(int32_t v, int32_t max_v)
 
 int main()
 {
-	uint8_t NLx = 5; // Number of levels in x (decomp_h)
+	uint8_t NLx = 1; // Number of levels in x (decomp_h)
 	if (NLx > 5)
 	{
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
@@ -98,19 +98,19 @@ int main()
 			precinct_sig_mag_data_bufs[0][idst] = -val + SIGN_BIT_MASK;
 	}
 
-	for (int lvl = 1; lvl <= NLx; ++lvl)
+	for (int lvl = 0; lvl <= NLx; ++lvl)
 	{
 		int32_t or_all, j, k, i, j_last;
 		for (i = 0, k = 0; i < (precinct_sig_mag_data_bufs[lvl].size() / group_size) * group_size; i += group_size, ++k)
 		{
 			for (or_all = 0, j = 0; j < group_size; j++)
-				or_all |= precinct_sig_mag_data_bufs[lvl][j];
+				or_all |= precinct_sig_mag_data_bufs[lvl][i + j];
 			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
 		}
 		if (precinct_sig_mag_data_bufs[lvl].size() % group_size) // incomplete group of coeffs
 		{
 			for (or_all = 0, j_last = 0; j_last < precinct_sig_mag_data_bufs[lvl].size() % group_size; j_last++, j++)
-				or_all |= precinct_sig_mag_data_bufs[lvl][j];
+				or_all |= precinct_sig_mag_data_bufs[lvl][i + j];
 			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
 		}
 	}
