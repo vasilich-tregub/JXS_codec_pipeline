@@ -18,5 +18,19 @@
     <ClCompile Include="JXS_mls_1Dcodec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bitpacking.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="markers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bitpacking.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="markers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

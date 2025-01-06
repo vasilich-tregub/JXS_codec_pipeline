@@ -127,7 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bitpacking.c" />
     <ClCompile Include="JXS_mls_1Dcodec.cpp" />
+    <ClCompile Include="markers.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bitpacking.h" />
+    <ClInclude Include="markers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

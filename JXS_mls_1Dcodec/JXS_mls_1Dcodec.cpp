@@ -1,10 +1,12 @@
 // JXS_mls_1Dcodec.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-
+#pragma once
 #include <iostream>
 #include <vector>
 #include "LGT.h"
-
+extern "C" {
+#include "markers.h"
+}
 #include <intrin.h>
 static unsigned int __inline BSR(unsigned long x)
 {
@@ -30,21 +32,46 @@ int32_t clamp(int32_t v, int32_t max_v)
 
 int main()
 {
+	config_t config{};
+	init_config(&config);
 	uint8_t NLx = 1; // Number of levels in x (decomp_h)
 	if (NLx > 5)
 	{
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
 		return -1;
 	}
+	config.p.NLx = NLx;
+
 	uint32_t width = 80;
+	uint32_t height = 1;
+	uint8_t ncomps = 1;
 	std::vector<int32_t> img2enc(width);    // img2enc is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
 	for (int ix = 0; ix < width; ++ix) {
 		img2enc[ix] = 256 - 16 * (ix / 5);   // Y
 	}
 	int32_t depth = 8;
+
+	image_t im{ ncomps, width, height, depth, nullptr };
+
+	// xs_config_resolve_bw_fq
+	if (config.profile == 0x6ec0/*XS_PROFILE_MLS_12*/ && config.p.Bw == 0xff)
+		config.p.Bw = im.depth;
+
 	int32_t dclev = ((1 << depth) >> 1);
 	for (int i = 0; i < width; ++i)
 		img2enc[i] = (img2enc[i] - dclev);
+
+	size_t bitstream_buf_size, bitstream_buf_max_size;
+	uint8_t* bitstream_buf = NULL;
+	// Take the RAW image size and add some extra for margin.
+	bitstream_buf_max_size = width * height * ncomps * ((depth + 7) >> 3) + 1024 * 1024;
+	bitstream_buf = (uint8_t*)malloc(bitstream_buf_max_size);
+
+	bit_packer_t* bitstream = bitpacker_init();
+
+	bitpacker_set_buffer(bitstream, bitstream_buf, bitstream_buf_max_size);
+
+	const int header_len = write_head(bitstream, &im, &config);
 
 	std::cout << "Forward\n";
 	for (int i = 0; i < NLx; ++i)
