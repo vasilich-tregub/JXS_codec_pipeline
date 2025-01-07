@@ -71,6 +71,8 @@ int main()
 
 	bitpacker_set_buffer(bitstream, bitstream_buf, bitstream_buf_max_size);
 
+	int slice_idx = 0;
+	int markers_len = 0;
 	const int header_len = write_head(bitstream, &im, &config);
 
 	std::cout << "Forward\n";
@@ -86,6 +88,8 @@ int main()
 	}
 	std::cout << "\n";
 
+	//for (int line_idx = 0; line_idx < image->height; line_idx += ctx->ids.ph)
+	//{
 	int group_size = 4;
 	std::vector<std::vector<int32_t>> precinct_sig_mag_data_bufs(NLx + 1);// Mimics ref codec's prec sig_mag_data buffer, where level indices are in reverse
 	std::vector<std::vector<int8_t>> precinct_gclis_bufs(NLx + 1);// Mimics ref codec's prec gclis buffer, where level indices are in reverse
@@ -124,7 +128,9 @@ int main()
 		else
 			precinct_sig_mag_data_bufs[0][idst] = -val + SIGN_BIT_MASK;
 	}
+	// end of precinct from image
 
+	// update gclis
 	for (int lvl = 0; lvl <= NLx; ++lvl)
 	{
 		int32_t or_all, j, k, i, j_last;
@@ -141,10 +147,27 @@ int main()
 			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
 		}
 	}
-	// end of precinct from image
+	// end of update gclis
 
-	// planned: rate control; quantization; dequantization etc. to be added here 
+	//if (rate_control_process_precinct(ctx->rc[column], ctx->precinct[column], &rc_results) < 0) {
+		//return false;
+	//}
+	// 
+	// planned: quantization; dequantization etc. to be added here 
+	//if (precinct_is_first_of_slice(ctx->precinct[column], ctx->xs_config->p.slice_height) && (column == 0))
+	//{
+	markers_len += write_slice_header(bitstream, slice_idx++);
+	//}
 
+	// pack precinct
+	//bitpacker_write(bitstream, ((ra_result->precinct_total_bits - ra_result->pbinfo.prec_header_size) >> 3), PREC_HDR_PREC_SIZE);
+	//assert(ra_result->quantization < 16);
+	//bitpacker_write(bitstream, ra_result->quantization, PREC_HDR_QUANTIZATION_SIZE);
+	//bitpacker_write(bitstream, ra_result->refinement, PREC_HDR_REFINEMENT_SIZE);
+	// etc.
+	// end of pack precinct
+	
+	//} end of for (int line_idx = 0; line_idx < image->height; line_idx += ctx->ids.ph)
 	std::vector<int32_t> dcdimg(width);    // dcdimg, decoded image
 
 	// precinct to image

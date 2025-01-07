@@ -141,6 +141,16 @@ int write_head(bit_packer_t* bitstream, image_t* im, const config_t* cfg)
 	return nbits;
 }
 
+int write_slice_header(bit_packer_t* bitstream, int slice_idx)
+{
+	int nbits = 0;
+	nbits += bitpacker_write(bitstream, XS_MARKER_SLH, XS_MARKER_NBITS);
+	nbits += bitpacker_write(bitstream, 4, XS_MARKER_NBITS);
+	nbits += bitpacker_write(bitstream, slice_idx, 16);
+	//assert(nbits == XS_SLICE_HEADER_NBYTES * 8);
+	return nbits;
+}
+
 // for JXS CODEC dissection only
 void init_config(config_t* config)
 {

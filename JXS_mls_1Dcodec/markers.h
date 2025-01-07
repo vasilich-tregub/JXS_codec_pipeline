@@ -106,4 +106,6 @@ struct config_t
 bool xs_parse_u8array_(uint8_t* values, int max_items, const char* cfg_str, int* num);
 
 int write_head(bit_packer_t* bitstream, image_t* im, const config_t* cfg);
+int write_slice_header(bit_packer_t* bitstream, int slice_idx);
+
 void init_config(config_t* config);
