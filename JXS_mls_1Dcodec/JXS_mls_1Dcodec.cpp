@@ -34,7 +34,7 @@ int main()
 {
 	config_t config{};
 	init_config(&config);
-	uint8_t NLx = 5; // Number of levels in x (decomp_h)
+	uint8_t NLx = 1; // Number of levels in x (decomp_h)
 	if (NLx > 5)
 	{
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
@@ -188,7 +188,7 @@ int main()
 	int lvl, ypos, idx_start, idx_stop, idx, gtli;*/
 	int len_before_subpkt = 0;
 	int lvl, ypos;
-	int idx_start, idx_stop;
+	int idx_start, idx_stop, idx;
 	for (idx_start = idx_stop = 0; idx_stop < position_count; idx_stop++)
 	{
 		if ((idx_stop != (position_count - 1))/* && (precinct_subpkt_of(precinct, idx_stop) == precinct_subpkt_of(precinct, idx_stop + 1))*/)
@@ -210,7 +210,40 @@ int main()
 		bitpacker_write(bitstream, (uint64_t)/*ra_result->pbinfo.subpkt_size_sign[subpkt]*/0 >> 3, use_long_precinct_headers ? PKT_HDR_SIGN_SIZE_LONG : PKT_HDR_SIGN_SIZE_SHORT);
 		bitpacker_align(bitstream, PKT_HDR_ALIGNMENT);
 
+		// pack glis
 		len_before_subpkt = bitpacker_get_len(bitstream);
+		for (idx = idx_start; idx <= idx_stop; idx++)
+		{
+			//lvl = precinct_band_index_of(precinct, idx);
+			//ypos = precinct_ypos_of(precinct, idx);
+			//err = (err) || pack_gclis(ctx, bitstream, precinct, ra_result, idx);
+			//return pack_raw_gclis(bitstream, precinct_gcli_of(precinct, lvl, ypos), (int)precinct_gcli_width_of(precinct, lvl)) < 0;
+			//int pack_raw_gclis(bit_packer_t* bitstream, gcli_data_t* gclis, int len)
+			int bit_len = 0, n = 1;
+			for (int i = 0; (i < precinct_gclis_bufs[idx].size()) && (n > 0); i++)
+			{
+				n = bitpacker_write(bitstream, precinct_gclis_bufs[idx][i], 4);
+				bit_len += n;
+			}
+		}
+		bitpacker_align(bitstream, SUBPKT_ALIGNMENT);
+
+		len_before_subpkt = bitpacker_get_len(bitstream);
+		for (idx = idx_start; idx <= idx_stop; idx++)
+		{
+			//lvl = precinct_band_index_of(precinct, idx);
+			//ypos = precinct_ypos_of(precinct, idx);
+			/*if (precinct_is_line_present(precinct, lvl, ypos))
+			{
+				gtli = ra_result->gtli_table_data[lvl];
+				if (ctx->xs_config->verbose > 3)
+				{
+					fprintf(stderr, "DATA (bitpos=%d) (lvl=%d ypos=%d gtli=%d)\n", bitpacker_get_len(bitstream), lvl, ypos, gtli);
+				}
+				err = err || (pack_data(bitstream, precinct_line_of(precinct, lvl, ypos), (int)precinct_width_of(precinct, lvl), precinct_gcli_of(precinct, lvl, ypos), ctx->xs_config->p.N_g, gtli, ctx->xs_config->p.Fs) < 0);
+			}*/
+		}
+		bitpacker_align(bitstream, SUBPKT_ALIGNMENT);
 	}
 		// etc.
 	// end of pack precinct
