@@ -34,7 +34,7 @@ int main()
 {
 	config_t config{};
 	init_config(&config);
-	uint8_t NLx = 1; // Number of levels in x (decomp_h)
+	uint8_t NLx = 5; // Number of levels in x (decomp_h)
 	if (NLx > 5)
 	{
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
@@ -100,8 +100,8 @@ int main()
 		precinct_gclis_bufs[i].resize((bufsize + group_size - 1) / group_size);
 		precinct_sig_mag_data_bufs[i].resize((bufsize + group_size - 1) / group_size * group_size);
 	}                                            // the last array has the earliest details, array of size of half source data length
-	precinct_sig_mag_data_bufs[0].resize((bufsize + group_size) / group_size * group_size); // precinct->sig_mag_data_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
-	precinct_gclis_bufs[0].resize((bufsize + group_size) / group_size);    // precinct->gclis_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
+	precinct_gclis_bufs[0].resize((bufsize + group_size - 1) / group_size);    // precinct->gclis_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
+	precinct_sig_mag_data_bufs[0].resize((bufsize + group_size - 1) / group_size * group_size); // precinct->sig_mag_data_mb->bufs[sig_mag_data_mb->n_buffers-1] is given by dwt_forward(im, 0)
 
 	// precinct from image
 	std::cout << "Precinct from image; images not altered\n";
@@ -159,12 +159,60 @@ int main()
 	markers_len += write_slice_header(bitstream, slice_idx++);
 	//}
 
+	/* To back engineer how the ra_result fields of the below comments should be filled in, 
+	* we need to analyze xs_ref_sw_ed2's routines:
+	* xs_enc calls `rate control process precinct` which creates rc_results; 
+	* rc_results`s quantization and refinement fields are filled with the _do_rate_allocation call; 
+	* other fields are filled directly by the `rate control process precinct` function.
+    * rate_control_t* rc param of this function is created in the xs_enc_init function call 
+    * in line ctx->rc[column] = rate_control_open(xs_config, &ctx->ids, column); (126).
+	*/
 	// pack precinct
-	//bitpacker_write(bitstream, ((ra_result->precinct_total_bits - ra_result->pbinfo.prec_header_size) >> 3), PREC_HDR_PREC_SIZE);
+	const bool use_long_precinct_headers = false;// precinct_use_long_headers(precinct);
+
+	bitpacker_write(bitstream, ((/*ra_result->precinct_total_bits*/672 - /*ra_result->pbinfo.prec_header_size*/48) >> 3), PREC_HDR_PREC_SIZE);
 	//assert(ra_result->quantization < 16);
-	//bitpacker_write(bitstream, ra_result->quantization, PREC_HDR_QUANTIZATION_SIZE);
-	//bitpacker_write(bitstream, ra_result->refinement, PREC_HDR_REFINEMENT_SIZE);
-	// etc.
+	bitpacker_write(bitstream, /*ra_result->quantization*/0, PREC_HDR_QUANTIZATION_SIZE);
+	bitpacker_write(bitstream, /*ra_result->refinement*/1, PREC_HDR_REFINEMENT_SIZE);
+	
+	for (int band = 0; band < /*bands_count_of(precinct)*/2; ++band)
+	{
+		const int method_signaling = 0;// gcli_method_get_signaling(ra_result->gcli_sb_methods[band], ctx->enabled_methods);
+		bitpacker_write(bitstream, method_signaling, GCLI_METHOD_NBITS) < 0;
+	}
+	bitpacker_align(bitstream, PREC_HDR_ALIGNMENT);
+	
+	const int position_count = 2;// line_count_of(precinct);
+	int subpkt = 0;
+	/*int len_after = 0;
+	int lvl, ypos, idx_start, idx_stop, idx, gtli;*/
+	int len_before_subpkt = 0;
+	int lvl, ypos;
+	int idx_start, idx_stop;
+	for (idx_start = idx_stop = 0; idx_stop < position_count; idx_stop++)
+	{
+		if ((idx_stop != (position_count - 1))/* && (precinct_subpkt_of(precinct, idx_stop) == precinct_subpkt_of(precinct, idx_stop + 1))*/)
+		{
+			continue;
+		}
+		lvl = 0;// precinct_band_index_of(precinct, idx_start);
+		ypos = 0;// precinct_ypos_of(precinct, idx_start);
+		/*if (!precinct_is_line_present(precinct, lvl, ypos))
+		{
+			++subpkt;
+			idx_start = idx_stop + 1;
+			continue;
+		}*/
+
+		bitpacker_write(bitstream, (uint64_t)/*ra_result->pbinfo.subpkt_uses_raw_fallback[subpkt]*/1, 1);
+		bitpacker_write(bitstream, (uint64_t)/*ra_result->pbinfo.subpkt_size_data[subpkt]*/504 >> 3, use_long_precinct_headers ? PKT_HDR_DATA_SIZE_LONG : PKT_HDR_DATA_SIZE_SHORT);
+		bitpacker_write(bitstream, (uint64_t)/*ra_result->pbinfo.subpkt_size_gcli[subpkt]*/80 >> 3, use_long_precinct_headers ? PKT_HDR_GCLI_SIZE_LONG : PKT_HDR_GCLI_SIZE_SHORT);
+		bitpacker_write(bitstream, (uint64_t)/*ra_result->pbinfo.subpkt_size_sign[subpkt]*/0 >> 3, use_long_precinct_headers ? PKT_HDR_SIGN_SIZE_LONG : PKT_HDR_SIGN_SIZE_SHORT);
+		bitpacker_align(bitstream, PKT_HDR_ALIGNMENT);
+
+		len_before_subpkt = bitpacker_get_len(bitstream);
+	}
+		// etc.
 	// end of pack precinct
 	
 	//} end of for (int line_idx = 0; line_idx < image->height; line_idx += ctx->ids.ph)

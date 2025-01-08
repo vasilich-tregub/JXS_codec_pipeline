@@ -103,6 +103,24 @@ struct config_t
 
 #define XS_SLICE_HEADER_NBYTES ((2 * XS_MARKER_NBYTES) + 2)
 
+#define GCLI_METHOD_NBITS 2
+
+#define PREC_HDR_PREC_SIZE 24
+#define PREC_HDR_QUANTIZATION_SIZE 8
+#define PREC_HDR_REFINEMENT_SIZE 8
+
+#define PREC_HDR_ALIGNMENT 8
+
+#define PKT_HDR_DATA_SIZE_SHORT 15
+#define PKT_HDR_DATA_SIZE_LONG 20
+#define PKT_HDR_GCLI_SIZE_SHORT 13
+#define PKT_HDR_GCLI_SIZE_LONG 20
+#define PKT_HDR_SIGN_SIZE_SHORT 11
+#define PKT_HDR_SIGN_SIZE_LONG 15
+#define PKT_HDR_ALIGNMENT 8
+
+#define SUBPKT_ALIGNMENT 8
+
 bool xs_parse_u8array_(uint8_t* values, int max_items, const char* cfg_str, int* num);
 
 int write_head(bit_packer_t* bitstream, image_t* im, const config_t* cfg);
