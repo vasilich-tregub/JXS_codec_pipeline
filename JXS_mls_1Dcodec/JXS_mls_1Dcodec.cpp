@@ -35,6 +35,7 @@ int main()
 	config_t config{};
 	init_config(&config);
 	uint8_t NLx = 1; // Number of levels in x (decomp_h)
+	int bands_count = NLx + 1;
 	if (NLx > 5)
 	{
 		std::cout << "NLx=" << (uint32_t)NLx << " is greater than max allowed decomp level (5)\n";
@@ -166,16 +167,37 @@ int main()
 	* other fields are filled directly by the `rate control process precinct` function.
     * rate_control_t* rc param of this function is created in the xs_enc_init function call 
     * in line ctx->rc[column] = rate_control_open(xs_config, &ctx->ids, column); (126).
+	* both ra_result->precinct_total_bits and ra_result->pbinfo.prec_header_size
+	* are boiled down to out->precinct_bits and out->prec_header_size of function 
+	* void precinct_get_budget(precinct_t*, ..., precinct_budget_info_t* out), precinct_budget.c, line 164
+	* see ../../(../)memo.c
 	*/
 	// pack precinct
 	const bool use_long_precinct_headers = false;// precinct_use_long_headers(precinct);
 
-	bitpacker_write(bitstream, ((/*ra_result->precinct_total_bits*/672 - /*ra_result->pbinfo.prec_header_size*/48) >> 3), PREC_HDR_PREC_SIZE);
+	uint32_t /*ra_results_pbinfo_*/prec_header_size = ALIGN_TO_BITS(PREC_HDR_PREC_SIZE + PREC_HDR_QUANTIZATION_SIZE + PREC_HDR_REFINEMENT_SIZE + /*bands_count_of(precinct)*/bands_count * GCLI_METHOD_NBITS, PREC_HDR_ALIGNMENT);
+	int /*rc_result_pbinfo_*/precinct_bits = prec_header_size;
+	uint32_t pkt_header_size = ALIGN_TO_BITS((PKT_HDR_DATA_SIZE_SHORT + PKT_HDR_GCLI_SIZE_SHORT + PKT_HDR_SIGN_SIZE_SHORT + 1),	PKT_HDR_ALIGNMENT); // =40
+	precinct_bits += pkt_header_size;
+	uint32_t subpkt_size_sigf = 0;
+	precinct_bits += subpkt_size_sigf;
+	uint32_t subpkt_size_gcli = 80; // precinct_gclis_bufs[0].size()?
+	precinct_bits += subpkt_size_gcli;
+	uint32_t subpkt_size_data = 504; // precinct_sig_mag_data_bufs[0].size()?
+	precinct_bits += subpkt_size_data;
+	uint32_t subpkt_size_sign = 0;
+	precinct_bits += subpkt_size_sign;
+	uint32_t subpkt_size_gcli_row = 80; // width? still, not added to precinct_bits
+	
+
+	int rc_results_padding_bits = 0;
+	int ra_result_precinct_total_bits = /*rc_result_pbinfo_*/precinct_bits + rc_results_padding_bits;
+	bitpacker_write(bitstream, ((ra_result_precinct_total_bits - /*ra_result->pbinfo.*/prec_header_size) >> 3), PREC_HDR_PREC_SIZE);
 	//assert(ra_result->quantization < 16);
 	bitpacker_write(bitstream, /*ra_result->quantization*/0, PREC_HDR_QUANTIZATION_SIZE);
 	bitpacker_write(bitstream, /*ra_result->refinement*/1, PREC_HDR_REFINEMENT_SIZE);
 	
-	for (int band = 0; band < /*bands_count_of(precinct)*/2; ++band)
+	for (int band = 0; band < /*bands_count_of(precinct)*/bands_count; ++band)
 	{
 		const int method_signaling = 0;// gcli_method_get_signaling(ra_result->gcli_sb_methods[band], ctx->enabled_methods);
 		bitpacker_write(bitstream, method_signaling, GCLI_METHOD_NBITS) < 0;

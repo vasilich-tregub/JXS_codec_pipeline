@@ -121,6 +121,8 @@ struct config_t
 
 #define SUBPKT_ALIGNMENT 8
 
+#define ALIGN_TO_BITS(value, nbits) ((value + nbits - 1) & (~(nbits - 1)))
+
 bool xs_parse_u8array_(uint8_t* values, int max_items, const char* cfg_str, int* num);
 
 int write_head(bit_packer_t* bitstream, image_t* im, const config_t* cfg);
