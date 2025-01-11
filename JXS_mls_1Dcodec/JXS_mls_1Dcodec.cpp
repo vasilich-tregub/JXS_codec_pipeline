@@ -30,6 +30,35 @@ int32_t clamp(int32_t v, int32_t max_v)
 	return v;
 }
 
+int budget_get_data_budget(const /*gcli_data_t*/uint8_t* gclis, int gclis_len, uint32_t* budget_table, int table_size, int group_size, int include_sign)
+{
+	memset(budget_table, 0, sizeof(int) * table_size);
+
+	for (int i = 0; i < gclis_len; i++)
+	{
+		for (int gtli = 0; gtli < table_size; gtli++)
+		{
+			int n_bitplanes = (gclis[i] - gtli);
+			if (group_size == 1) {
+				n_bitplanes -= 1;
+				if (include_sign)
+					n_bitplanes += 1;
+			}
+
+			if (n_bitplanes <= 0)
+				break;
+
+			if (group_size > 1) {
+				if (include_sign)
+					n_bitplanes += 1;
+			}
+
+			budget_table[gtli] += (n_bitplanes * group_size);
+		}
+	}
+	return 0;
+}
+
 int main()
 {
 	config_t config{};
@@ -151,6 +180,20 @@ int main()
 	// end of update gclis
 
 	//if (rate_control_process_precinct(ctx->rc[column], ctx->precinct[column], &rc_results) < 0) {
+	// int rate_control_process_precinct(...){} rate_control.c, line 160
+	// fill_gcli_budget_table(rc->gc_enabled_modes, precinct, precinct_top, NULL, rc->pbt, rc->pred_residuals, 0, rc->xs_config->p.S_s);
+	// fill_data_budget_table(precinct, rc->pbt, rc->xs_config->p.N_g, rc->xs_config->p.Fs, rc->xs_config->p.Qpih);
+	// int fill_data_budget_table(precinct_t* prec, precinct_budget_table_t* pbt, int group_size, const uint8_t sign_packing, int dq_type){}
+	// data_budget.c, line 118
+	// budget_get_data_budget(precinct_gcli_of(prec, lvl, ypos), (int)precinct_gcli_width_of(prec, lvl), pbt_get_data_bgt_of(pbt, position), MAX_GCLI + 1, group_size, sign_packing == 0);
+	// data_budget.c, line 128; THIS COMPILATION MODULE, line 33
+	// int budget_get_data_budget(const gcli_data_t* gclis, int gclis_len, uint32_t* budget_table, int table_size, int group_size, int include_sign) {}
+	// data_budget, line 61
+	// static INLINE uint32_t* pbt_get_data_bgt_of(precinct_budget_table_t* pbt, int position) precinct_budget_table.c, line 84
+	// {
+		//return pbt->data_budget_table->bufs.u32[position];
+	// } 
+	// 
 		//return false;
 	//}
 	// 
@@ -171,6 +214,7 @@ int main()
 	* are boiled down to out->precinct_bits and out->prec_header_size of function 
 	* void precinct_get_budget(precinct_t*, ..., precinct_budget_info_t* out), precinct_budget.c, line 164
 	* see ../../(../)memo.c
+	* EXAMINE detect_gcli_raw_fallback(precinct, Rl, out); branch! precinct_budget.c, line 229
 	*/
 	// pack precinct
 	const bool use_long_precinct_headers = false;// precinct_use_long_headers(precinct);
@@ -181,13 +225,13 @@ int main()
 	precinct_bits += pkt_header_size;
 	uint32_t subpkt_size_sigf = 0;
 	precinct_bits += subpkt_size_sigf;
-	uint32_t subpkt_size_gcli = 80; // precinct_gclis_bufs[0].size()?
+	uint32_t subpkt_size_gcli = precinct_gclis_bufs[0].size() * 8; //80
 	precinct_bits += subpkt_size_gcli;
-	uint32_t subpkt_size_data = 504; // precinct_sig_mag_data_bufs[0].size()?
+	uint32_t subpkt_size_data = 504; // precinct_sig_mag_data_bufs[0].size()? pbt_get_data_bgt_of(...)!
 	precinct_bits += subpkt_size_data;
 	uint32_t subpkt_size_sign = 0;
 	precinct_bits += subpkt_size_sign;
-	uint32_t subpkt_size_gcli_row = 80; // width? still, not added to precinct_bits
+	uint32_t subpkt_size_gcli_raw = 80; // width? still, not added to precinct_bits
 	
 
 	int rc_results_padding_bits = 0;
