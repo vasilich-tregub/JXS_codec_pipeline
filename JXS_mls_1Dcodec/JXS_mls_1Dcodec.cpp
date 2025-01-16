@@ -76,8 +76,11 @@ int main()
 	uint32_t height = 1;
 	uint8_t ncomps = 1;
 	std::vector<int32_t> img2enc(width);    // img2enc is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
-	for (int ix = 0; ix < width; ++ix) {
+	/*for (int ix = 0; ix < width; ++ix) {
 		img2enc[ix] = 256 - 16 * (ix / 5);   // Y
+	}*/
+	for (int ix = 0; ix < width; ++ix) {
+		img2enc[ix] = (ix - (int)width / 2) * 256 / (int)width + 129;   // Y
 	}
 	int32_t depth = 8;
 
