@@ -74,15 +74,16 @@ int main()
 
 	uint32_t width = 80;
 	uint32_t height = 1;
+	int32_t depth = 12;
 	uint8_t ncomps = 1;
+
 	std::vector<int32_t> img2enc(width);    // img2enc is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
 	/*for (int ix = 0; ix < width; ++ix) {
 		img2enc[ix] = 256 - 16 * (ix / 5);   // Y
 	}*/
 	for (int ix = 0; ix < width; ++ix) {
-		img2enc[ix] = (ix - (int)width / 2) * 256 / (int)width + 129;   // Y
+		img2enc[ix] = (ix - (int)width / 2) * (1 << depth) / (int)width + (1 << (depth - 1));   // Y
 	}
-	int32_t depth = 8;
 
 	image_t im{ ncomps, width, height, depth, nullptr };
 
@@ -124,7 +125,7 @@ int main()
 	//for (int line_idx = 0; line_idx < image->height; line_idx += ctx->ids.ph)
 	//{
 	int group_size = 4;
-	std::vector<std::vector<int32_t>> precinct_sig_mag_data_bufs(NLx + 1);// Mimics ref codec's prec sig_mag_data buffer, where level indices are in reverse
+	std::vector<std::vector<uint32_t>> precinct_sig_mag_data_bufs(NLx + 1);// Mimics ref codec's prec sig_mag_data buffer, where level indices are in reverse
 	std::vector<std::vector<int8_t>> precinct_gclis_bufs(NLx + 1);// Mimics ref codec's prec gclis buffer, where level indices are in reverse
 	size_t bufsize = width;
 	for (int i = NLx; i > 0; --i)
@@ -139,8 +140,10 @@ int main()
 	// precinct from image
 	std::cout << "Precinct from image; images not altered\n";
 	int d = 1; // fill precinct_sig_mag_data_bufs[NLx + 1 - lvl] and isolate value sign into msb
+	// lvl = 0 is exceptional as buf is not half size of lvl-1 (no precinct_sig_mag_data_bufs[lvl-1] subarray for lvl = 0)
 	for (int lvl = 1; lvl <= NLx; ++lvl)
 	{
+		printf("lvl %d sig_mag_data:\n", lvl);
 		d = 1 << lvl;
 		for (int idst = 0, iximg = 0; iximg < width - (1 << (lvl - 1)); iximg += d, ++idst)
 		{
@@ -150,9 +153,12 @@ int main()
 				precinct_sig_mag_data_bufs[band_idx][idst] = val;
 			else
 				precinct_sig_mag_data_bufs[band_idx][idst] = -val + SIGN_BIT_MASK;
-
+			printf("%X ", precinct_sig_mag_data_bufs[band_idx][idst]);
 		}
+		printf("\n");
 	}
+	// lvl = 0 is exceptional as buf is not half size of lvl-1 (no precinct_sig_mag_data_bufs[lvl-1] subarray for lvl = 0)
+	printf("lvl %d sig_mag_data:\n", 0);
 	for (int idst = 0, iximg = 0; iximg < width; ++idst, iximg += d)
 	{
 		int32_t val = img2enc[iximg]; // approximation coeff
@@ -160,29 +166,36 @@ int main()
 			precinct_sig_mag_data_bufs[0][idst] = val;
 		else
 			precinct_sig_mag_data_bufs[0][idst] = -val + SIGN_BIT_MASK;
+		printf("%X ", precinct_sig_mag_data_bufs[0][idst]);
 	}
+	printf("\n");
 	// end of precinct from image
 
 	// update gclis
 	for (int lvl = 0; lvl <= NLx; ++lvl)
 	{
 		int32_t or_all, j, k, i, j_last;
+		printf("lvl %d gclis:\n", lvl);
 		for (i = 0, k = 0; i < (precinct_sig_mag_data_bufs[lvl].size() / group_size) * group_size; i += group_size, ++k)
 		{
 			for (or_all = 0, j = 0; j < group_size; j++)
 				or_all |= precinct_sig_mag_data_bufs[lvl][i + j];
 			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
+			printf("%X ", precinct_gclis_bufs[lvl][k]);
 		}
 		if (precinct_sig_mag_data_bufs[lvl].size() % group_size) // incomplete group of coeffs
 		{
 			for (or_all = 0, j_last = 0; j_last < precinct_sig_mag_data_bufs[lvl].size() % group_size; j_last++, j++)
 				or_all |= precinct_sig_mag_data_bufs[lvl][i + j];
 			precinct_gclis_bufs[lvl][k] = GCLI(or_all & (~SIGN_BIT_MASK));
+			printf("%X ", precinct_gclis_bufs[lvl][k]);
 		}
+		printf("\n");
 	}
 	// end of update gclis
 
 	//if (rate_control_process_precinct(ctx->rc[column], ctx->precinct[column], &rc_results) < 0) {
+	/* ? ? ? in jxs_mls_1Dcodec, boils down to fill_gcli_budget_table and fill_data_budget_table ?*/
 	// int rate_control_process_precinct(...){} rate_control.c, line 160
 	// fill_gcli_budget_table(rc->gc_enabled_modes, precinct, precinct_top, NULL, rc->pbt, rc->pred_residuals, 0, rc->xs_config->p.S_s);
 	// fill_data_budget_table(precinct, rc->pbt, rc->xs_config->p.N_g, rc->xs_config->p.Fs, rc->xs_config->p.Qpih);
