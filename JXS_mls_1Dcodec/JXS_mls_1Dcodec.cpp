@@ -82,7 +82,10 @@ int main()
 		img2enc[ix] = 256 - 16 * (ix / 5);   // Y
 	}*/
 	for (int ix = 0; ix < width; ++ix) {
-		img2enc[ix] = (ix - (int)width / 2) * (1 << depth) / (int)width + (1 << (depth - 1));   // Y
+		//img2enc[ix] = (ix - (int)width / 2) * (1 << depth) / (int)width + (1 << (depth - 1));   // Y
+		//img2enc[ix] += (int)(ix * ix * ix * ix / width / width / width); // (bi)quadratic term
+		img2enc[ix] = (ix * (1 << (depth - 5))) % (1 << depth);
+		img2enc[ix] = clamp(img2enc[ix], (1 << depth));
 	}
 
 	image_t im{ ncomps, width, height, depth, nullptr };
