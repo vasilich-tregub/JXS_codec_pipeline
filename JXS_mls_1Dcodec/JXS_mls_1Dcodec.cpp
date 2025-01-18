@@ -74,7 +74,7 @@ int main()
 
 	uint32_t width = 80;
 	uint32_t height = 1;
-	int32_t depth = 12;
+	int32_t depth = 8;
 	uint8_t ncomps = 1;
 
 	std::vector<int32_t> img2enc(width);    // img2enc is later used to store details, so int32_t instead of uint32_t to make sign visible in printouts
@@ -82,9 +82,9 @@ int main()
 		img2enc[ix] = 256 - 16 * (ix / 5);   // Y
 	}*/
 	for (int ix = 0; ix < width; ++ix) {
-		//img2enc[ix] = (ix - (int)width / 2) * (1 << depth) / (int)width + (1 << (depth - 1));   // Y
+		img2enc[ix] = (ix - (int)width / 2) * (1 << depth) / (int)width + (1 << (depth - 1));   // Y
 		//img2enc[ix] += (int)(ix * ix * ix * ix / width / width / width); // (bi)quadratic term
-		img2enc[ix] = (ix * (1 << (depth - 5))) % (1 << depth);
+		//img2enc[ix] = (ix * (1 << (depth - 5))) % (1 << depth);
 		img2enc[ix] = clamp(img2enc[ix], (1 << depth));
 	}
 
@@ -201,6 +201,17 @@ int main()
 	/* ? ? ? in jxs_mls_1Dcodec, boils down to fill_gcli_budget_table and fill_data_budget_table ?*/
 	// int rate_control_process_precinct(...){} rate_control.c, line 160
 	// fill_gcli_budget_table(rc->gc_enabled_modes, precinct, precinct_top, NULL, rc->pbt, rc->pred_residuals, 0, rc->xs_config->p.S_s);
+	// int fill_gcli_budget_table(uint32_t active_methods, const precinct_t* prec, const precinct_t* prec_top, int* gtli_top_array, precinct_budget_table_t* pbt, predbuffer_t* residuals, int update_only, int sigflags_group_width){}
+	// gcli_budget.c, line 226
+	// gcli_budget_compute_generic(prec, method, pbt, residuals, sigflags_group_width, active_methods);
+	// gcli_budget.c, line 253
+	// static int gcli_budget_compute_generic(const precinct_t* prec, int gcli_method, precinct_budget_table_t* pbt, predbuffer_t* residuals, int sig_flags_group_width, uint64_t active_methods)
+	// gcli_budget.c, line 97
+	// 
+	// in the call to tco_pred_none (module pred.c) of gcli_budget's compute_residuals, the processing boils down to 
+	// 	for (i = 0; i < buf_len; i++) 	pred_buf[i] = MAX(0, gcli_buf[i] - gtli);
+	//
+	// 
 	// fill_data_budget_table(precinct, rc->pbt, rc->xs_config->p.N_g, rc->xs_config->p.Fs, rc->xs_config->p.Qpih);
 	// int fill_data_budget_table(precinct_t* prec, precinct_budget_table_t* pbt, int group_size, const uint8_t sign_packing, int dq_type){}
 	// data_budget.c, line 118
@@ -215,7 +226,19 @@ int main()
 	// 
 		//return false;
 	//}
-	// 
+
+	std::vector<std::vector<std::vector<int8_t>>> residuals(NLx + 1); // no vertical direcional pred; residuals[band_idx][gtli<MAX_GCLI+1][i<(gcli_buf.size() + group_size - 1) / group_size)]
+	for (int lvl = 0; lvl <= NLx; ++lvl)
+	{
+		residuals[lvl].resize(MAX_GCLI + 1);
+		for (int gtli = 0; gtli < MAX_GCLI + 1; ++gtli)
+		{
+			residuals[lvl][gtli].resize(precinct_gclis_bufs[lvl].size());
+			for (int i = 0; i < precinct_gclis_bufs[lvl].size(); ++i)
+				residuals[lvl][gtli][i] = MAX(0, precinct_gclis_bufs[lvl][i] - gtli);
+		}
+	}
+
 	// planned: quantization; dequantization etc. to be added here 
 	//if (precinct_is_first_of_slice(ctx->precinct[column], ctx->xs_config->p.slice_height) && (column == 0))
 	//{
