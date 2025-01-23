@@ -24,12 +24,18 @@
     <ClCompile Include="markers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="precinct_bgt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitpacking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="markers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="precinct_bgt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

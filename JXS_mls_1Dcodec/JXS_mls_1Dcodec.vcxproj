@@ -130,10 +130,12 @@
     <ClCompile Include="bitpacking.c" />
     <ClCompile Include="JXS_mls_1Dcodec.cpp" />
     <ClCompile Include="markers.c" />
+    <ClCompile Include="precinct_bgt.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitpacking.h" />
     <ClInclude Include="markers.h" />
+    <ClInclude Include="precinct_bgt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

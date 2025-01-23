@@ -6,7 +6,6 @@
 #include "LGT.h"
 extern "C" {
 #include "markers.h"
-#include "precinct_bgt.h"
 }
 #include <intrin.h>
 static unsigned int __inline BSR(unsigned long x)
@@ -205,31 +204,83 @@ int main()
 	}
 	// end of update gclis
 
-	// rate_control_process_precinct
-	
+	//if (rate_control_process_precinct(ctx->rc[column], ctx->precinct[column], &rc_results) < 0) {
+	/* ? ? ? in jxs_mls_1Dcodec, boils down to fill_gcli_budget_table and fill_data_budget_table ?*/
+	// int rate_control_process_precinct(...){} rate_control.c, line 160
+	// fill_gcli_budget_table(rc->gc_enabled_modes, precinct, precinct_top, NULL, rc->pbt, rc->pred_residuals, 0, rc->xs_config->p.S_s);
+	// int fill_gcli_budget_table(uint32_t active_methods, const precinct_t* prec, const precinct_t* prec_top, int* gtli_top_array, precinct_budget_table_t* pbt, predbuffer_t* residuals, int update_only, int sigflags_group_width){}
+	// gcli_budget.c, line 226
+	// gcli_budget_compute_generic(prec, method, pbt, residuals, sigflags_group_width, active_methods);
+	// gcli_budget.c, line 253
+	// static int gcli_budget_compute_generic(const precinct_t* prec, int gcli_method, precinct_budget_table_t* pbt, predbuffer_t* residuals, int sig_flags_group_width, uint64_t active_methods)
+	// gcli_budget.c, line 97
+	// 
+	// in the call to tco_pred_none (module pred.c) of gcli_budget's compute_residuals, the processing boils down to 
+	// 	for (i = 0; i < buf_len; i++) 	pred_buf[i] = MAX(0, gcli_buf[i] - gtli);
+	//
+	// maybe replace here lines 232-... (comp_resds, gcli_bgt_comp_geh) from below 
+	// 
+	// fill_data_budget_table(precinct, rc->pbt, rc->xs_config->p.N_g, rc->xs_config->p.Fs, rc->xs_config->p.Qpih);
+	// int fill_data_budget_table(precinct_t* prec, precinct_budget_table_t* pbt, int group_size, const uint8_t sign_packing, int dq_type){}
+	// data_budget.c, line 118
+	// budget_get_data_budget(precinct_gcli_of(prec, lvl, ypos), (int)precinct_gcli_width_of(prec, lvl), pbt_get_data_bgt_of(pbt, position), MAX_GCLI + 1, group_size, sign_packing == 0);
+	// data_budget.c, line 128; THIS COMPILATION MODULE, line 33
+	// int budget_get_data_budget(const gcli_data_t* gclis, int gclis_len, uint32_t* budget_table, int table_size, int group_size, int include_sign) {}
+	// data_budget, line 61
+	// static INLINE uint32_t* pbt_get_data_bgt_of(precinct_budget_table_t* pbt, int position) precinct_budget_table.c, line 84
+	// {
+		//return pbt->data_budget_table->bufs.u32[position];
+	// } 
+	// 
+		//return false;
+	//}
+
+	// sort of compute_residuals (line 168, gcli_budget.c)
+	std::vector<std::vector<std::vector<int8_t>>> residuals(NLx + 1); // no vertical direcional pred; residuals[band_idx][gtli<MAX_GCLI+1][i<(gcli_buf.size() + group_size - 1) / group_size)]
+	for (int lvl = 0; lvl <= NLx; ++lvl)
+	{
+		residuals[lvl].resize(MAX_GCLI + 1);
+		for (int gtli = 0; gtli < MAX_GCLI + 1; ++gtli)
+		{
+			residuals[lvl][gtli].resize(precinct_gclis_bufs[lvl].size());
+			for (int i = 0; i < precinct_gclis_bufs[lvl].size(); ++i)
+				residuals[lvl][gtli][i] = MAX(0, precinct_gclis_bufs[lvl][i] - gtli);
+		}
+	}
+
+	// sort of gcli_budget_compute_generic (line 97, gcli_budget.c)
+	/* type here (using, among other things, residuals vector above?) */
+
+	// 
+	// planned: quantization; dequantization etc. to be added here 
 	//if (precinct_is_first_of_slice(ctx->precinct[column], ctx->xs_config->p.slice_height) && (column == 0))
 	//{
 	markers_len += write_slice_header(bitstream, slice_idx++);
 	//}
 
+	/* To back engineer how the ra_result fields of the below comments should be filled in,
+	* we need to analyze xs_ref_sw_ed2's routines:
+	* xs_enc calls `rate control process precinct` which creates rc_results;
+	* rc_results`s quantization and refinement fields are filled with the _do_rate_allocation call;
+	* _do_rate_allocation call also computes gtli_table_data and gtli_table_gcli via call to
+	* compute_gtli_tables(*q_out, *ref_out, bands_count_of(), lvl_gains, lvl_priorities, gtli_table_data, gtli_table_gcli, &empty);
+	* gtli_table_data and gtli_table_gcli are later used to compute total_budget =
+	* ra_helper_get_total_budget_(precinct, ra_params, pbt, gtli_table_data, gtli_table_gcli, gcli_sb_methods, bgt_info);
+	* other fields are filled directly by the `rate control process precinct` function.
+	* rate_control_t* rc param of this function is created in the xs_enc_init function call
+	* in line ctx->rc[column] = rate_control_open(xs_config, &ctx->ids, column); (126).
+	* both ra_result->precinct_total_bits and ra_result->pbinfo.prec_header_size
+	* are boiled down to out->precinct_bits and out->prec_header_size of function
+	* void precinct_get_budget(precinct_t*, ..., precinct_budget_info_t* out), precinct_budget.c, line 164
+	* see ../../(../)memo.c
+	* EXAMINE detect_gcli_raw_fallback(precinct, Rl, out); branch! precinct_budget.c, line 229
+	*/
 	// pack precinct
-
-	precinct_budget_table_t* pbt = pbt_open(1, 1);
-	precinct_budget_info_t out;
-	int gtli_table_gcli[2];
-	memset(gtli_table_gcli, 0, 2 * sizeof(int));
-	int gtli_table_data[2];
-	memset(gtli_table_data, 0, 2 * sizeof(int));
-
-	// calls to fill_gcli_budget_table and fill_data_budget_table
-
-	precinct_get_budget(pbt, gtli_table_gcli, gtli_table_data, &out); // out is invalid w/o calls to fill_gcli_budget_table and fill_data_budget_table
-
 	const bool use_long_precinct_headers = false;// precinct_use_long_headers(precinct);
 
 	uint32_t /*ra_results_pbinfo_*/prec_header_size = ALIGN_TO_BITS(PREC_HDR_PREC_SIZE + PREC_HDR_QUANTIZATION_SIZE + PREC_HDR_REFINEMENT_SIZE + /*bands_count_of(precinct)*/bands_count * GCLI_METHOD_NBITS, PREC_HDR_ALIGNMENT);
 	int /*rc_result_pbinfo_*/precinct_bits = prec_header_size;
-	uint32_t pkt_header_size = ALIGN_TO_BITS((PKT_HDR_DATA_SIZE_SHORT + PKT_HDR_GCLI_SIZE_SHORT + PKT_HDR_SIGN_SIZE_SHORT + 1),	PKT_HDR_ALIGNMENT); // =40
+	uint32_t pkt_header_size = ALIGN_TO_BITS((PKT_HDR_DATA_SIZE_SHORT + PKT_HDR_GCLI_SIZE_SHORT + PKT_HDR_SIGN_SIZE_SHORT + 1), PKT_HDR_ALIGNMENT); // =40
 	precinct_bits += pkt_header_size;
 	uint32_t subpkt_size_sigf = 0;
 	precinct_bits += subpkt_size_sigf;
@@ -240,7 +291,7 @@ int main()
 	uint32_t subpkt_size_sign = 0;
 	precinct_bits += subpkt_size_sign;
 	uint32_t subpkt_size_gcli_raw = 80; // width? still, not added to precinct_bits
-	
+
 
 	int rc_results_padding_bits = 0;
 	int ra_result_precinct_total_bits = /*rc_result_pbinfo_*/precinct_bits + rc_results_padding_bits;
@@ -248,14 +299,14 @@ int main()
 	//assert(ra_result->quantization < 16);
 	bitpacker_write(bitstream, /*ra_result->quantization*/0, PREC_HDR_QUANTIZATION_SIZE);
 	bitpacker_write(bitstream, /*ra_result->refinement*/1, PREC_HDR_REFINEMENT_SIZE);
-	
+
 	for (int band = 0; band < /*bands_count_of(precinct)*/bands_count; ++band)
 	{
 		const int method_signaling = 0;// gcli_method_get_signaling(ra_result->gcli_sb_methods[band], ctx->enabled_methods);
 		bitpacker_write(bitstream, method_signaling, GCLI_METHOD_NBITS) < 0;
 	}
 	bitpacker_align(bitstream, PREC_HDR_ALIGNMENT);
-	
+
 	const int position_count = 2;// line_count_of(precinct);
 	int subpkt = 0;
 	/*int len_after = 0;
@@ -319,10 +370,10 @@ int main()
 		}
 		bitpacker_align(bitstream, SUBPKT_ALIGNMENT);
 	}
-		// etc.
-	// end of pack precinct
-	
-	//} end of for (int line_idx = 0; line_idx < image->height; line_idx += ctx->ids.ph)
+	// etc.
+// end of pack precinct
+
+//} end of for (int line_idx = 0; line_idx < image->height; line_idx += ctx->ids.ph)
 	std::vector<int32_t> dcdimg(width);    // dcdimg, decoded image
 
 	// precinct to image
