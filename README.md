@@ -5,6 +5,8 @@ The JXS\_codec\_pipeline is a derivative work and includes in their entirety the
 and SVT-JPEG-XS (https://github.com/OpenVisualCloud/SVT-JPEG-XS) software packages individually specified 
 in the projects of this solution.
 
+### The item on the entropy encoding with JPEG XS standard is added in the JXS\_MLS.12\_enc folder.
+
 ## Overview
 
 This is is a series of projects to help understand and effectively use ISO 21122 (5) reference software packet.
@@ -59,3 +61,6 @@ changing hard coded parameters and analysing log printouts.
 More efficiently, you can use this snippet with the xs_ref_sw_ed2 reference software 
 library itself 
 (https://standards.iso.org/iso-iec/21122/-5/ed-2/en/ISO_IEC_21122-5_2_Ed-2.zip).
+
+The item on the entropy encoding with JPEG XS standard can be found in the JXS\_MLS.12\_enc folder 
+(not a full-blown project, only code snippets and readme).

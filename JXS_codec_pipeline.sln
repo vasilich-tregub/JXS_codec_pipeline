@@ -24,6 +24,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeGall53_decomposition(doub
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JXS_mls_1Dcodec", "JXS_mls_1Dcodec\JXS_mls_1Dcodec.vcxproj", "{A1AA7A01-7FE5-49BB-854E-475E3CE4891E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JXS_MLS.12_enc", "JXS_MLS.12_enc", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		JXS_MLS.12_enc\libjxs\CMakeLists.txt = JXS_MLS.12_enc\libjxs\CMakeLists.txt
+		JXS_MLS.12_enc\Fig1fromIntoPIXarticle.png = JXS_MLS.12_enc\Fig1fromIntoPIXarticle.png
+		JXS_MLS.12_enc\Fig2fromIntoPIXarticle.png = JXS_MLS.12_enc\Fig2fromIntoPIXarticle.png
+		JXS_MLS.12_enc\Fig3fromIntoPIXarticle.png = JXS_MLS.12_enc\Fig3fromIntoPIXarticle.png
+		JXS_MLS.12_enc\libjxs\src\image_create.h = JXS_MLS.12_enc\libjxs\src\image_create.h
+		JXS_MLS.12_enc\libjxs\src\image_write.h = JXS_MLS.12_enc\libjxs\src\image_write.h
+		JXS_MLS.12_enc\libjxs\src\JXS_mls.cpp = JXS_MLS.12_enc\libjxs\src\JXS_mls.cpp
+		JXS_MLS.12_enc\README.md = JXS_MLS.12_enc\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
