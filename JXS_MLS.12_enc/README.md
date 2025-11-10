@@ -1,4 +1,4 @@
-# JXS codec pipeline
+# JXS codec entropy coding
 
 ## License
 The JXS\_codec\_pipeline is a derivative work and includes in their entirety the files from the ISO-IEC 21122 (5)

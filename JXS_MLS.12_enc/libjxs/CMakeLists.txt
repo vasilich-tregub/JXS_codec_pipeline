@@ -6,7 +6,7 @@
 # the accompanying software (hereinafter the "Software").
 # 
 # This file is borrowed from the xs_ref_sw_ed2 repo (/libjxs/CMakeLists.txt) 
-# and updated on Nov 9, 2025 (lines 99-103) 
+# and updated on Nov 9, 2025 (lines 100-104) 
 # by Owner of the JXS_codec_pipeline repo.
 # ============================================================================
 
